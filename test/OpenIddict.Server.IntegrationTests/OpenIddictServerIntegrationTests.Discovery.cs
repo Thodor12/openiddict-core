@@ -763,7 +763,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentials.Clear());
+            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
             options.AddSigningCredentials(credentials);
         });
 
@@ -783,7 +783,7 @@ public abstract partial class OpenIddictServerIntegrationTests
         // Arrange
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentials.Clear());
+            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
             options.AddSigningKey(new SymmetricSecurityKey(new byte[256 / 8]));
             options.AddSigningCredentials(new SigningCredentials(Mock.Of<AsymmetricSecurityKey>(), Algorithms.RsaSha256));
         });
@@ -807,7 +807,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentials.Clear());
+            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
             options.AddSigningCredentials(credentials);
             options.AddSigningCredentials(credentials);
             options.AddSigningCredentials(credentials);
@@ -1247,7 +1247,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentials.Clear());
+            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
             options.AddSigningKey(new RsaSecurityKey(parameters));
         });
 
@@ -1303,7 +1303,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentials.Clear());
+            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
             options.AddSigningKey(new ECDsaSecurityKey(algorithm));
         });
 

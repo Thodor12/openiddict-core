@@ -674,7 +674,7 @@ public static partial class OpenIddictServerHandlers
                     throw new ArgumentNullException(nameof(context));
                 }
 
-                foreach (var credentials in context.Options.SigningCredentials)
+                foreach (var credentials in context.Options.SigningCredentialsResolver.GetSigningCredentials())
                 {
                     // Try to resolve the JWA algorithm short name.
                     var algorithm = credentials.Algorithm switch
@@ -1068,7 +1068,7 @@ public static partial class OpenIddictServerHandlers
                     throw new ArgumentNullException(nameof(context));
                 }
 
-                foreach (var credentials in context.Options.SigningCredentials)
+                foreach (var credentials in context.Options.SigningCredentialsResolver.GetSigningCredentials())
                 {
 #if SUPPORTS_ECDSA
                     if (!credentials.Key.IsSupportedAlgorithm(SecurityAlgorithms.RsaSha256) &&

@@ -2649,7 +2649,7 @@ public static partial class OpenIddictServerHandlers
                 return default;
             }
 
-            var credentials = context.Options.SigningCredentials.FirstOrDefault(
+            var credentials = context.Options.SigningCredentialsResolver?.GetSigningCredentials().FirstOrDefault(
                 credentials => credentials.Key is AsymmetricSecurityKey);
             if (credentials is null)
             {

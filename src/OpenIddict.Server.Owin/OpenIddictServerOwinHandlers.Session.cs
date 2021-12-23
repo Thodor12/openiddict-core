@@ -217,9 +217,9 @@ public static partial class OpenIddictServerOwinHandlers
                     Claims = context.Request.GetParameters().ToDictionary(
                         parameter => parameter.Key,
                         parameter => parameter.Value.Value),
-                    EncryptingCredentials = context.Options.EncryptionCredentials.First(),
+                    EncryptingCredentials = context.Options.EncryptionCredentialsResolver.GetCurrentEncryptionCredential(),
                     Issuer = context.Issuer?.AbsoluteUri,
-                    SigningCredentials = context.Options.SigningCredentials.First(),
+                    SigningCredentials = context.Options.SigningCredentialsResolver.GetCurrentSigningCredential(),
                     Subject = new ClaimsIdentity(),
                     TokenType = JsonWebTokenTypes.Private.LogoutRequest
                 });

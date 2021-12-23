@@ -1032,17 +1032,17 @@ public static partial class OpenIddictServerHandlers
                     TokenTypeHints.AccessToken when context.Options.DisableAccessTokenEncryption => null,
                     TokenTypeHints.IdToken => null,
 
-                    _ => context.Options.EncryptionCredentials.First()
+                    _ => context.Options.EncryptionCredentialsResolver?.GetEncryptionCredentials().First()
                 };
 
                 context.SigningCredentials = context.TokenType switch
                 {
                     // Note: unlike other tokens, identity tokens can only be signed using an asymmetric key
                     // as they are meant to be validated by clients using the public keys exposed by the server.
-                    TokenTypeHints.IdToken => context.Options.SigningCredentials.First(credentials =>
+                    TokenTypeHints.IdToken => context.Options.SigningCredentialsResolver?.GetSigningCredentials().First(credentials =>
                         credentials.Key is AsymmetricSecurityKey),
 
-                    _ => context.Options.SigningCredentials.First()
+                    _ => context.Options.SigningCredentialsResolver?.GetSigningCredentials().First()
                 };
 
                 return default;

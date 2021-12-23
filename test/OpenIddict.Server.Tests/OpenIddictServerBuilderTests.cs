@@ -131,7 +131,7 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act and assert
-        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddEncryptionCredentials(credentials: null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionCredentials(credentials: null!)));
         Assert.Equal("credentials", exception.ParamName);
     }
 
@@ -143,7 +143,7 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act and assert
-        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddEncryptionKey(key: null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionKey(key: null!)));
         Assert.Equal("key", exception.ParamName);
     }
 
@@ -156,7 +156,7 @@ public class OpenIddictServerBuilderTests
         var key = Mock.Of<AsymmetricSecurityKey>(key => key.PrivateKeyStatus == PrivateKeyStatus.DoesNotExist);
 
         // Act and assert
-        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddEncryptionKey(key));
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionKey(key)));
         Assert.Equal("The asymmetric encryption key doesn't contain the required private key.", exception.Message);
     }
 
@@ -170,12 +170,12 @@ public class OpenIddictServerBuilderTests
         var key = Mock.Of<SecurityKey>(mock => mock.KeySize == 256 && mock.IsSupportedAlgorithm(SecurityAlgorithms.Aes256KW));
 
         // Act
-        builder.AddEncryptionKey(key);
+        builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionKey(key));
 
         var options = GetOptions(services);
 
         // Assert
-        Assert.Same(key, options.EncryptionCredentials[0].Key);
+        Assert.Same(key, options.EncryptionCredentialsResolver?.GetEncryptionCredentials().First().Key);
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public class OpenIddictServerBuilderTests
 
         // Act and assert
         var key = Mock.Of<SecurityKey>(mock => mock.KeySize == 128 && mock.IsSupportedAlgorithm(SecurityAlgorithms.Aes256KW));
-        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddEncryptionKey(key));
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionKey(key)));
         Assert.Equal(SR.FormatID0283(256, 128), exception.Message);
     }
 
@@ -200,7 +200,7 @@ public class OpenIddictServerBuilderTests
 
         // Act and assert
         var key = Mock.Of<SecurityKey>(mock => mock.KeySize == 384 && mock.IsSupportedAlgorithm(SecurityAlgorithms.Aes256KW));
-        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddEncryptionKey(key));
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionKey(key)));
         Assert.Equal(SR.FormatID0283(256, 384), exception.Message);
     }
 
@@ -272,7 +272,7 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act and assert
-        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddDevelopmentEncryptionCertificate(subject: null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddDevelopmentEncryptionCertificate(subject: null!)));
         Assert.Equal("subject", exception.ParamName);
     }
 
@@ -285,15 +285,15 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act
-        builder.AddDevelopmentEncryptionCertificate();
+        builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddDevelopmentEncryptionCertificate());
 
         var options = GetOptions(services);
 
         // Assert
-        Assert.Single(options.EncryptionCredentials);
-        Assert.Equal(SecurityAlgorithms.RsaOAEP, options.EncryptionCredentials[0].Alg);
-        Assert.Equal(SecurityAlgorithms.Aes256CbcHmacSha512, options.EncryptionCredentials[0].Enc);
-        Assert.NotNull(options.EncryptionCredentials[0].Key.KeyId);
+        Assert.Single(options.EncryptionCredentialsResolver?.GetEncryptionCredentials());
+        Assert.Equal(SecurityAlgorithms.RsaOAEP, options.EncryptionCredentialsResolver?.GetEncryptionCredentials().First().Alg);
+        Assert.Equal(SecurityAlgorithms.Aes256CbcHmacSha512, options.EncryptionCredentialsResolver?.GetEncryptionCredentials().First().Enc);
+        Assert.NotNull(options.EncryptionCredentialsResolver?.GetEncryptionCredentials().First().Key.KeyId);
     }
 #else
     [Fact]
@@ -304,8 +304,8 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act and assert
-        var exception = Assert.Throws<PlatformNotSupportedException>(() => builder.AddDevelopmentEncryptionCertificate(
-            subject: new X500DistinguishedName("CN=" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture))));
+        var exception = Assert.Throws<PlatformNotSupportedException>(() => builder.AddInMemoryEncryptionCredentialsManager(builder => builder.AddDevelopmentEncryptionCertificate(
+            subject: new X500DistinguishedName("CN=" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)))));
 
         Assert.Equal("X.509 certificate generation is not supported on this platform.", exception.Message);
     }
@@ -321,7 +321,7 @@ public class OpenIddictServerBuilderTests
         // Act and assert
         var exception = Assert.Throws<ArgumentNullException>(delegate
         {
-            builder.AddDevelopmentSigningCertificate(subject: null!);
+            builder.AddInMemorySigningCredentialsManager(builder => builder.AddDevelopmentSigningCertificate(subject: null!));
         });
 
         Assert.Equal("subject", exception.ParamName);
@@ -336,14 +336,14 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act
-        builder.AddDevelopmentSigningCertificate();
+        builder.AddInMemorySigningCredentialsManager(builder => builder.AddDevelopmentSigningCertificate());
 
         var options = GetOptions(services);
 
         // Assert
-        Assert.Single(options.SigningCredentials);
-        Assert.Equal(SecurityAlgorithms.RsaSha256, options.SigningCredentials[0].Algorithm);
-        Assert.NotNull(options.SigningCredentials[0].Kid);
+        Assert.Single(options.SigningCredentialsResolver?.GetSigningCredentials());
+        Assert.Equal(SecurityAlgorithms.RsaSha256, options.SigningCredentialsResolver?.GetSigningCredentials().First().Algorithm);
+        Assert.NotNull(options.SigningCredentialsResolver?.GetSigningCredentials().First().Kid);
     }
 #else
     [Fact]
@@ -354,8 +354,8 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act and assert
-        var exception = Assert.Throws<PlatformNotSupportedException>(() => builder.AddDevelopmentSigningCertificate(
-            subject: new X500DistinguishedName("CN=" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture))));
+        var exception = Assert.Throws<PlatformNotSupportedException>(() => builder.AddInMemorySigningCredentialsManager(builder => builder.AddDevelopmentSigningCertificate(
+            subject: new X500DistinguishedName("CN=" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)))));
 
         Assert.Equal("X.509 certificate generation is not supported on this platform.", exception.Message);
     }
@@ -369,12 +369,12 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act
-        builder.AddEphemeralSigningKey();
+        builder.AddInMemorySigningCredentialsManager(builder => builder.AddEphemeralSigningKey());
 
         var options = GetOptions(services);
 
         // Assert
-        Assert.Single(options.SigningCredentials);
+        Assert.Single(options.SigningCredentialsResolver?.GetSigningCredentials());
     }
 
     [Theory]
@@ -393,13 +393,13 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act
-        builder.AddEphemeralSigningKey(algorithm);
+        builder.AddInMemorySigningCredentialsManager(builder => builder.AddEphemeralSigningKey(algorithm));
 
         var options = GetOptions(services);
-        var credentials = options.SigningCredentials[0];
+        var credentials = options.SigningCredentialsResolver?.GetSigningCredentials().First();
 
         // Assert
-        Assert.Equal(algorithm, credentials.Algorithm);
+        Assert.Equal(algorithm, credentials?.Algorithm);
     }
 
     [Fact]
@@ -410,7 +410,7 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act and assert
-        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddSigningKey(key: null!));
+        var exception = Assert.Throws<ArgumentNullException>(() => builder.AddInMemorySigningCredentialsManager(builder => builder.AddSigningKey(key: null!)));
         Assert.Equal("key", exception.ParamName);
     }
 
@@ -423,7 +423,7 @@ public class OpenIddictServerBuilderTests
         var key = Mock.Of<AsymmetricSecurityKey>(key => key.PrivateKeyStatus == PrivateKeyStatus.DoesNotExist);
 
         // Act and assert
-        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddSigningKey(key));
+        var exception = Assert.Throws<InvalidOperationException>(() => builder.AddInMemorySigningCredentialsManager(builder => builder.AddSigningKey(key)));
         Assert.Equal("The asymmetric signing key doesn't contain the required private key.", exception.Message);
     }
 
@@ -444,12 +444,12 @@ public class OpenIddictServerBuilderTests
         var key = Mock.Of<SecurityKey>(mock => mock.IsSupportedAlgorithm(algorithm));
 
         // Act
-        builder.AddSigningKey(key);
+        builder.AddInMemorySigningCredentialsManager(builder => builder.AddSigningKey(key));
 
         var options = GetOptions(services);
 
         // Assert
-        Assert.Same(key, options.SigningCredentials[0].Key);
+        Assert.Same(key, options.SigningCredentialsResolver?.GetSigningCredentials().First().Key);
     }
 
     [Fact]
@@ -460,15 +460,15 @@ public class OpenIddictServerBuilderTests
         var builder = CreateBuilder(services);
 
         // Act
-        builder.AddSigningCertificate(
+        builder.AddInMemorySigningCredentialsManager(builder => builder.AddSigningCertificate(
             assembly: typeof(OpenIddictServerBuilderTests).GetTypeInfo().Assembly,
             resource: "OpenIddict.Server.Tests.Certificate.pfx",
-            password: "OpenIddict");
+            password: "OpenIddict"));
 
         var options = GetOptions(services);
 
         // Assert
-        Assert.IsType<X509SecurityKey>(options.SigningCredentials[0].Key);
+        Assert.IsType<X509SecurityKey>(options.SigningCredentialsResolver?.GetSigningCredentials().First().Key);
     }
 
     [Fact]

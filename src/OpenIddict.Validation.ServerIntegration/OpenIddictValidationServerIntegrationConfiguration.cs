@@ -45,13 +45,13 @@ public class OpenIddictValidationServerIntegrationConfiguration : IConfigureOpti
         };
 
         // Import the signing keys from the server configuration.
-        foreach (var credentials in _options.CurrentValue.SigningCredentials)
+        foreach (var credentials in _options.CurrentValue.SigningCredentialsResolver.GetSigningCredentials())
         {
             options.Configuration.SigningKeys.Add(credentials.Key);
         }
 
         // Import the encryption keys from the server configuration.
-        options.EncryptionCredentials.AddRange(_options.CurrentValue.EncryptionCredentials);
+        options.EncryptionCredentials.AddRange(_options.CurrentValue.EncryptionCredentialsResolver.GetEncryptionCredentials());
 
         // Note: token entry validation must be enabled to be able to validate reference access tokens.
         options.EnableTokenEntryValidation = _options.CurrentValue.UseReferenceAccessTokens;

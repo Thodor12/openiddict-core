@@ -22,9 +22,7 @@ public class OpenIddictServerOptions
     public Uri? Issuer { get; set; }
 
     /// <summary>
-    /// Gets the list of encryption credentials used by the OpenIddict server services.
-    /// Multiple credentials can be added to support key rollover, but if X.509 keys
-    /// are used, at least one of them must have a valid creation/expiration date.
+    /// Gets a resolver instance for the encryption credentials used by the OpenIddict server services.
     /// Note: the encryption credentials are not used to protect/unprotect tokens issued
     /// by ASP.NET Core Data Protection, that uses its own key ring, configured separately.
     /// </summary>
@@ -37,12 +35,10 @@ public class OpenIddictServerOptions
     ///   <item><description>X.509 keys whose backing certificate is not yet valid are never preferred.</description></item>
     /// </list>
     /// </remarks>
-    public List<EncryptingCredentials> EncryptionCredentials { get; } = new();
+    public IOpenIddictServerEncryptionCredentialsResolver? EncryptionCredentialsResolver { get; set; }
 
     /// <summary>
-    /// Gets the list of signing credentials used by the OpenIddict server services.
-    /// Multiple credentials can be added to support key rollover, but if X.509 keys
-    /// are used, at least one of them must have a valid creation/expiration date.
+    /// Gets a resolver instance for the signing credentials used by the OpenIddict server services.
     /// Note: the signing credentials are not used to protect/unprotect tokens issued
     /// by ASP.NET Core Data Protection, that uses its own key ring, configured separately.
     /// </summary>
@@ -55,7 +51,7 @@ public class OpenIddictServerOptions
     ///   <item><description>X.509 keys whose backing certificate is not yet valid are never preferred.</description></item>
     /// </list>
     /// </remarks>
-    public List<SigningCredentials> SigningCredentials { get; } = new();
+    public IOpenIddictServerSigningCredentialsResolver? SigningCredentialsResolver { get; set; }
 
     /// <summary>
     /// Gets the absolute and relative URIs associated to the authorization endpoint.

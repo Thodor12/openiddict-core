@@ -135,29 +135,40 @@ public class OpenIddictServerConfiguration : IPostConfigureOptions<OpenIddictSer
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0083));
         }
 
-        if (options.EncryptionCredentials.Count == 0)
+        if (options.EncryptionCredentialsResolver != null)
         {
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0085));
         }
 
-        if (!options.SigningCredentials.Any(credentials => credentials.Key is AsymmetricSecurityKey))
+        if (options.SigningCredentialsResolver != null)
         {
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0086));
         }
 
-        // If all the registered encryption credentials are backed by a X.509 certificate, at least one of them must be valid.
-        if (options.EncryptionCredentials.All(credentials => credentials.Key is X509SecurityKey x509SecurityKey &&
-               (x509SecurityKey.Certificate.NotBefore > DateTime.Now || x509SecurityKey.Certificate.NotAfter < DateTime.Now)))
-        {
-            throw new InvalidOperationException(SR.GetResourceString(SR.ID0087));
-        }
+        // These checks become irrelevant as this is resolved at runtime
+        //if (options.EncryptionCredentials.Count == 0)
+        //{
+        //    throw new InvalidOperationException(SR.GetResourceString(SR.ID0085));
+        //}
 
-        // If all the registered signing credentials are backed by a X.509 certificate, at least one of them must be valid.
-        if (options.SigningCredentials.All(credentials => credentials.Key is X509SecurityKey x509SecurityKey &&
-               (x509SecurityKey.Certificate.NotBefore > DateTime.Now || x509SecurityKey.Certificate.NotAfter < DateTime.Now)))
-        {
-            throw new InvalidOperationException(SR.GetResourceString(SR.ID0088));
-        }
+        //if (!options.SigningCredentials.Any(credentials => credentials.Key is AsymmetricSecurityKey))
+        //{
+        //    throw new InvalidOperationException(SR.GetResourceString(SR.ID0086));
+        //}
+
+        // If all the registered encryption credentials are backed by a X.509 certificate, at least one of them must be valid.
+        //if (options.EncryptionCredentials.All(credentials => credentials.Key is X509SecurityKey x509SecurityKey &&
+        //       (x509SecurityKey.Certificate.NotBefore > DateTime.Now || x509SecurityKey.Certificate.NotAfter < DateTime.Now)))
+        //{
+        //    throw new InvalidOperationException(SR.GetResourceString(SR.ID0087));
+        //}
+
+        //// If all the registered signing credentials are backed by a X.509 certificate, at least one of them must be valid.
+        //if (options.SigningCredentials.All(credentials => credentials.Key is X509SecurityKey x509SecurityKey &&
+        //       (x509SecurityKey.Certificate.NotBefore > DateTime.Now || x509SecurityKey.Certificate.NotAfter < DateTime.Now)))
+        //{
+        //    throw new InvalidOperationException(SR.GetResourceString(SR.ID0088));
+        //}
 
         if (options.EnableDegradedMode)
         {
@@ -247,95 +258,95 @@ public class OpenIddictServerConfiguration : IPostConfigureOptions<OpenIddictSer
         options.Handlers.Sort((left, right) => left.Order.CompareTo(right.Order));
 
         // Sort the encryption and signing credentials.
-        options.EncryptionCredentials.Sort((left, right) => Compare(left.Key, right.Key));
-        options.SigningCredentials.Sort((left, right) => Compare(left.Key, right.Key));
+        //options.EncryptionCredentials.Sort((left, right) => Compare(left.Key, right.Key));
+        //options.SigningCredentials.Sort((left, right) => Compare(left.Key, right.Key));
 
-        // Generate a key identifier for the encryption/signing keys that don't already have one.
-        foreach (var key in options.EncryptionCredentials.Select(credentials => credentials.Key)
-            .Concat(options.SigningCredentials.Select(credentials => credentials.Key))
-            .Where(key => string.IsNullOrEmpty(key.KeyId)))
-        {
-            key.KeyId = GetKeyIdentifier(key);
-        }
+        //// Generate a key identifier for the encryption/signing keys that don't already have one.
+        //foreach (var key in options.EncryptionCredentials.Select(credentials => credentials.Key)
+        //    .Concat(options.SigningCredentials.Select(credentials => credentials.Key))
+        //    .Where(key => string.IsNullOrEmpty(key.KeyId)))
+        //{
+        //    key.KeyId = GetKeyIdentifier(key);
+        //}
 
         // Attach the signing credentials to the token validation parameters.
-        options.TokenValidationParameters.IssuerSigningKeys =
-            from credentials in options.SigningCredentials
-            select credentials.Key;
+        //options.TokenValidationParameters.IssuerSigningKeys =
+        //    from credentials in options.SigningCredentials
+        //    select credentials.Key;
 
-        // Attach the encryption credentials to the token validation parameters.
-        options.TokenValidationParameters.TokenDecryptionKeys =
-            from credentials in options.EncryptionCredentials
-            select credentials.Key;
+        //// Attach the encryption credentials to the token validation parameters.
+        //options.TokenValidationParameters.TokenDecryptionKeys =
+        //    from credentials in options.EncryptionCredentials
+        //    select credentials.Key;
 
-        static int Compare(SecurityKey left, SecurityKey right) => (left, right) switch
-        {
-            // If the two keys refer to the same instances, return 0.
-            (SecurityKey first, SecurityKey second) when ReferenceEquals(first, second) => 0,
+//        static int Compare(SecurityKey left, SecurityKey right) => (left, right) switch
+//        {
+//            // If the two keys refer to the same instances, return 0.
+//            (SecurityKey first, SecurityKey second) when ReferenceEquals(first, second) => 0,
 
-            // If one of the keys is a symmetric key, prefer it to the other one.
-            (SymmetricSecurityKey, SymmetricSecurityKey) => 0,
-            (SymmetricSecurityKey, SecurityKey)          => -1,
-            (SecurityKey, SymmetricSecurityKey)          => 1,
+//            // If one of the keys is a symmetric key, prefer it to the other one.
+//            (SymmetricSecurityKey, SymmetricSecurityKey) => 0,
+//            (SymmetricSecurityKey, SecurityKey)          => -1,
+//            (SecurityKey, SymmetricSecurityKey)          => 1,
 
-            // If one of the keys is backed by a X.509 certificate, don't prefer it if it's not valid yet.
-            (X509SecurityKey first, SecurityKey)  when first.Certificate.NotBefore  > DateTime.Now => 1,
-            (SecurityKey, X509SecurityKey second) when second.Certificate.NotBefore > DateTime.Now => 1,
+//            // If one of the keys is backed by a X.509 certificate, don't prefer it if it's not valid yet.
+//            (X509SecurityKey first, SecurityKey)  when first.Certificate.NotBefore  > DateTime.Now => 1,
+//            (SecurityKey, X509SecurityKey second) when second.Certificate.NotBefore > DateTime.Now => 1,
 
-            // If the two keys are backed by a X.509 certificate, prefer the one with the furthest expiration date.
-            (X509SecurityKey first, X509SecurityKey second) => -first.Certificate.NotAfter.CompareTo(second.Certificate.NotAfter),
+//            // If the two keys are backed by a X.509 certificate, prefer the one with the furthest expiration date.
+//            (X509SecurityKey first, X509SecurityKey second) => -first.Certificate.NotAfter.CompareTo(second.Certificate.NotAfter),
 
-            // If one of the keys is backed by a X.509 certificate, prefer the X.509 security key.
-            (X509SecurityKey, SecurityKey) => -1,
-            (SecurityKey, X509SecurityKey) => 1,
+//            // If one of the keys is backed by a X.509 certificate, prefer the X.509 security key.
+//            (X509SecurityKey, SecurityKey) => -1,
+//            (SecurityKey, X509SecurityKey) => 1,
 
-            // If the two keys are not backed by a X.509 certificate, none should be preferred to the other.
-            (SecurityKey, SecurityKey) => 0
-        };
+//            // If the two keys are not backed by a X.509 certificate, none should be preferred to the other.
+//            (SecurityKey, SecurityKey) => 0
+//        };
 
-        static string? GetKeyIdentifier(SecurityKey key)
-        {
-            // When no key identifier can be retrieved from the security keys, a value is automatically
-            // inferred from the hexadecimal representation of the certificate thumbprint (SHA-1)
-            // when the key is bound to a X.509 certificate or from the public part of the signing key.
+//        static string? GetKeyIdentifier(SecurityKey key)
+//        {
+//            // When no key identifier can be retrieved from the security keys, a value is automatically
+//            // inferred from the hexadecimal representation of the certificate thumbprint (SHA-1)
+//            // when the key is bound to a X.509 certificate or from the public part of the signing key.
 
-            if (key is X509SecurityKey x509SecurityKey)
-            {
-                return x509SecurityKey.Certificate.Thumbprint;
-            }
+//            if (key is X509SecurityKey x509SecurityKey)
+//            {
+//                return x509SecurityKey.Certificate.Thumbprint;
+//            }
 
-            if (key is RsaSecurityKey rsaSecurityKey)
-            {
-                // Note: if the RSA parameters are not attached to the signing key,
-                // extract them by calling ExportParameters on the RSA instance.
-                var parameters = rsaSecurityKey.Parameters;
-                if (parameters.Modulus is null)
-                {
-                    parameters = rsaSecurityKey.Rsa.ExportParameters(includePrivateParameters: false);
+//            if (key is RsaSecurityKey rsaSecurityKey)
+//            {
+//                // Note: if the RSA parameters are not attached to the signing key,
+//                // extract them by calling ExportParameters on the RSA instance.
+//                var parameters = rsaSecurityKey.Parameters;
+//                if (parameters.Modulus is null)
+//                {
+//                    parameters = rsaSecurityKey.Rsa.ExportParameters(includePrivateParameters: false);
 
-                    Debug.Assert(parameters.Modulus is not null, SR.GetResourceString(SR.ID4003));
-                }
+//                    Debug.Assert(parameters.Modulus is not null, SR.GetResourceString(SR.ID4003));
+//                }
 
-                // Only use the 40 first chars of the base64url-encoded modulus.
-                var identifier = Base64UrlEncoder.Encode(parameters.Modulus);
-                return identifier.Substring(0, Math.Min(identifier.Length, 40)).ToUpperInvariant();
-            }
+//                // Only use the 40 first chars of the base64url-encoded modulus.
+//                var identifier = Base64UrlEncoder.Encode(parameters.Modulus);
+//                return identifier.Substring(0, Math.Min(identifier.Length, 40)).ToUpperInvariant();
+//            }
 
-#if SUPPORTS_ECDSA
-            if (key is ECDsaSecurityKey ecsdaSecurityKey)
-            {
-                // Extract the ECDSA parameters from the signing credentials.
-                var parameters = ecsdaSecurityKey.ECDsa.ExportParameters(includePrivateParameters: false);
+//#if SUPPORTS_ECDSA
+//            if (key is ECDsaSecurityKey ecsdaSecurityKey)
+//            {
+//                // Extract the ECDSA parameters from the signing credentials.
+//                var parameters = ecsdaSecurityKey.ECDsa.ExportParameters(includePrivateParameters: false);
 
-                Debug.Assert(parameters.Q.X is not null, SR.GetResourceString(SR.ID4004));
+//                Debug.Assert(parameters.Q.X is not null, SR.GetResourceString(SR.ID4004));
 
-                // Only use the 40 first chars of the base64url-encoded X coordinate.
-                var identifier = Base64UrlEncoder.Encode(parameters.Q.X);
-                return identifier.Substring(0, Math.Min(identifier.Length, 40)).ToUpperInvariant();
-            }
-#endif
+//                // Only use the 40 first chars of the base64url-encoded X coordinate.
+//                var identifier = Base64UrlEncoder.Encode(parameters.Q.X);
+//                return identifier.Substring(0, Math.Min(identifier.Length, 40)).ToUpperInvariant();
+//            }
+//#endif
 
-            return null;
-        }
+//            return null;
+//        }
     }
 }

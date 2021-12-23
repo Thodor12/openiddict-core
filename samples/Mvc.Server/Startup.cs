@@ -98,8 +98,8 @@ public class Startup
                 options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles, "demo_api");
 
                 // Register the signing and encryption credentials.
-                options.AddDevelopmentEncryptionCertificate()
-                       .AddDevelopmentSigningCertificate();
+                options.AddInMemorySigningCredentialsManager(builder => builder.AddDevelopmentSigningCertificate());
+                options.AddInMemoryEncryptionCredentialsManager(builder => builder.AddDevelopmentEncryptionCertificate());
 
                 // Force client applications to use Proof Key for Code Exchange (PKCE).
                 options.RequireProofKeyForCodeExchange();
