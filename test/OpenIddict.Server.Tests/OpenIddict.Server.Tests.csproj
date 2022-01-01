@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\OpenIddict.Server.KeyResolvers.InMemory\OpenIddict.Server.KeyResolvers.InMemory.csproj" />
     <ProjectReference Include="..\..\src\OpenIddict.Server\OpenIddict.Server.csproj" />
   </ItemGroup>
 

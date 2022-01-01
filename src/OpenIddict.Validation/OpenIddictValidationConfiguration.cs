@@ -78,21 +78,12 @@ public class OpenIddictValidationConfiguration : IPostConfigureOptions<OpenIddic
             }
         }
 
-        // If all the registered encryption credentials are backed by a X.509 certificate, at least one of them must be valid.
-        if (options.EncryptionCredentials.Count != 0 &&
-            options.EncryptionCredentials.All(credentials => credentials.Key is X509SecurityKey x509SecurityKey &&
-                (x509SecurityKey.Certificate.NotBefore > DateTime.Now || x509SecurityKey.Certificate.NotAfter < DateTime.Now)))
-        {
-            throw new InvalidOperationException(SR.GetResourceString(SR.ID0087));
-        }
-
         if (options.ConfigurationManager is null)
         {
             if (options.Configuration is not null)
             {
                 options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.Configuration);
             }
-
             else
             {
                 if (!options.Handlers.Any(descriptor => descriptor.ContextType == typeof(ApplyConfigurationRequestContext)) ||
@@ -146,8 +137,8 @@ public class OpenIddictValidationConfiguration : IPostConfigureOptions<OpenIddic
         options.Handlers.Sort((left, right) => left.Order.CompareTo(right.Order));
 
         // Attach the encryption credentials to the token validation parameters.
-        options.TokenValidationParameters.TokenDecryptionKeys =
-            from credentials in options.EncryptionCredentials
-            select credentials.Key;
+        //options.TokenValidationParameters.TokenDecryptionKeys =
+        //    from credentials in options.EncryptionCredentials
+        //    select credentials.Key;
     }
 }

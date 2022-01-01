@@ -4,13 +4,14 @@
  * the license and the contributors participating to this project.
  */
 
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using OpenIddict.KeyResolvers.Abstractions;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.Server;
 
@@ -656,6 +657,11 @@ public static partial class OpenIddictServerHandlers
         /// </summary>
         public class AttachSigningAlgorithms : IOpenIddictServerHandler<HandleConfigurationRequestContext>
         {
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
+
+            public AttachSigningAlgorithms(IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+                => _signingCredentialsResolver = signingCredentialsResolver;
+
             /// <summary>
             /// Gets the default descriptor definition assigned to this handler.
             /// </summary>
@@ -667,14 +673,14 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleConfigurationRequestContext context)
+            public async ValueTask HandleAsync(HandleConfigurationRequestContext context)
             {
                 if (context is null)
                 {
                     throw new ArgumentNullException(nameof(context));
                 }
 
-                foreach (var credentials in context.Options.SigningCredentialsResolver.GetSigningCredentials())
+                foreach (var credentials in await _signingCredentialsResolver.GetSigningCredentialsAsync())
                 {
                     // Try to resolve the JWA algorithm short name.
                     var algorithm = credentials.Algorithm switch
@@ -713,7 +719,7 @@ public static partial class OpenIddictServerHandlers
                     context.IdTokenSigningAlgorithms.Add(algorithm);
                 }
 
-                return default;
+                return;
             }
         }
 
@@ -1050,6 +1056,11 @@ public static partial class OpenIddictServerHandlers
         /// </summary>
         public class AttachSigningKeys : IOpenIddictServerHandler<HandleCryptographyRequestContext>
         {
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
+
+            public AttachSigningKeys(IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+                => _signingCredentialsResolver = signingCredentialsResolver;
+
             /// <summary>
             /// Gets the default descriptor definition assigned to this handler.
             /// </summary>
@@ -1061,14 +1072,14 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleCryptographyRequestContext context)
+            public async ValueTask HandleAsync(HandleCryptographyRequestContext context)
             {
                 if (context is null)
                 {
                     throw new ArgumentNullException(nameof(context));
                 }
 
-                foreach (var credentials in context.Options.SigningCredentialsResolver.GetSigningCredentials())
+                foreach (var credentials in await _signingCredentialsResolver.GetSigningCredentialsAsync())
                 {
 #if SUPPORTS_ECDSA
                     if (!credentials.Key.IsSupportedAlgorithm(SecurityAlgorithms.RsaSha256) &&
@@ -1233,7 +1244,7 @@ public static partial class OpenIddictServerHandlers
                     context.Keys.Add(key);
                 }
 
-                return default;
+                return;
 
 #if SUPPORTS_ECDSA
                 static bool IsCurve(ECParameters parameters, ECCurve curve)

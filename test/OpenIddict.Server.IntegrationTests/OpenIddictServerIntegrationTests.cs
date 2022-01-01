@@ -3264,15 +3264,15 @@ public abstract partial class OpenIddictServerIntegrationTests
                        .IgnoreResponseTypePermissions()
                        .IgnoreScopePermissions();
 
-                options.AddInMemorySigningCredentialsManager(builder => builder.AddSigningCertificate(
+                options.AddInMemorySigningCredentialsManager().AddSigningCertificate(
                     assembly: typeof(OpenIddictServerIntegrationTests).Assembly,
                     resource: "OpenIddict.Server.IntegrationTests.Certificate.pfx",
-                    password: "Owin.Security.OpenIdConnect.Server"));
+                    password: "Owin.Security.OpenIdConnect.Server");
 
-                options.AddInMemoryEncryptionCredentialsManager(builder => builder.AddEncryptionCertificate(
+                options.AddInMemoryEncryptionCredentialsManager().AddEncryptionCertificate(
                     assembly: typeof(OpenIddictServerIntegrationTests).Assembly,
                     resource: "OpenIddict.Server.IntegrationTests.Certificate.pfx",
-                    password: "Owin.Security.OpenIdConnect.Server"));
+                    password: "Owin.Security.OpenIdConnect.Server");
 
                 options.AddEventHandler<ValidateAuthorizationRequestContext>(builder =>
                     builder.UseInlineHandler(context => default));

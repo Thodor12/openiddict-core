@@ -4,17 +4,18 @@
  * the license and the contributors participating to this project.
  */
 
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using OpenIddict.KeyResolvers.Abstractions;
 using Owin;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text.Json;
 using static OpenIddict.Server.Owin.OpenIddictServerOwinConstants;
 using JsonWebTokenTypes = OpenIddict.Server.Owin.OpenIddictServerOwinConstants.JsonWebTokenTypes;
 
@@ -154,15 +155,21 @@ public static partial class OpenIddictServerOwinHandlers
         {
             private readonly IDistributedCache _cache;
             private readonly IOptionsMonitor<OpenIddictServerOwinOptions> _options;
+            private readonly IOpenIddictEncryptionCredentialsResolver _encryptionCredentialsResolver;
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
 
             public CacheRequestParameters() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0116));
 
             public CacheRequestParameters(
                 IDistributedCache cache,
-                IOptionsMonitor<OpenIddictServerOwinOptions> options)
+                IOptionsMonitor<OpenIddictServerOwinOptions> options,
+                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
             {
                 _cache = cache;
                 _options = options;
+                _encryptionCredentialsResolver = encryptionCredentialsResolver;
+                _signingCredentialsResolver = signingCredentialsResolver;
             }
 
             /// <summary>
@@ -217,9 +224,9 @@ public static partial class OpenIddictServerOwinHandlers
                     Claims = context.Request.GetParameters().ToDictionary(
                         parameter => parameter.Key,
                         parameter => parameter.Value.Value),
-                    EncryptingCredentials = context.Options.EncryptionCredentialsResolver.GetCurrentEncryptionCredential(),
+                    EncryptingCredentials = await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync(),
                     Issuer = context.Issuer?.AbsoluteUri,
-                    SigningCredentials = context.Options.SigningCredentialsResolver.GetCurrentSigningCredential(),
+                    SigningCredentials = await _signingCredentialsResolver.GetCurrentSigningCredentialAsync(),
                     Subject = new ClaimsIdentity(),
                     TokenType = JsonWebTokenTypes.Private.LogoutRequest
                 });

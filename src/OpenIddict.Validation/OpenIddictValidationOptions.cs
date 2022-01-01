@@ -17,22 +17,6 @@ namespace OpenIddict.Validation;
 public class OpenIddictValidationOptions
 {
     /// <summary>
-    /// Gets the list of encryption credentials used by the OpenIddict validation services.
-    /// Note: the encryption credentials are not used to protect/unprotect tokens issued
-    /// by ASP.NET Core Data Protection, that uses its own key ring, configured separately.
-    /// </summary>
-    /// <remarks>
-    /// Note: OpenIddict automatically sorts the credentials based on the following algorithm:
-    /// <list type="bullet">
-    ///   <item><description>Symmetric keys are always preferred when they can be used for the operation (e.g token encryption).</description></item>
-    ///   <item><description>X.509 keys are always preferred to non-X.509 asymmetric keys.</description></item>
-    ///   <item><description>X.509 keys with the furthest expiration date are preferred.</description></item>
-    ///   <item><description>X.509 keys whose backing certificate is not yet valid are never preferred.</description></item>
-    /// </list>
-    /// </remarks>
-    public List<EncryptingCredentials> EncryptionCredentials { get; } = new();
-
-    /// <summary>
     /// Gets or sets the JWT handler used to protect and unprotect tokens.
     /// </summary>
     public JsonWebTokenHandler JsonWebTokenHandler { get; set; } = new()

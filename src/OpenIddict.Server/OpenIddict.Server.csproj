@@ -14,6 +14,7 @@ To use the server feature on ASP.NET Core or OWIN/Katana, reference the OpenIddi
 
   <ItemGroup>
     <ProjectReference Include="..\OpenIddict.Abstractions\OpenIddict.Abstractions.csproj" />
+    <ProjectReference Include="..\OpenIddict.KeyResolvers.Abstractions\OpenIddict.KeyResolvers.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,9 +22,7 @@ To use the server feature on ASP.NET Core or OWIN/Katana, reference the OpenIddi
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>
 
-  <ItemGroup
-    Condition=" ('$(TargetFrameworkIdentifier)' == '.NETFramework') Or
-                ('$(TargetFrameworkIdentifier)' == '.NETStandard' And $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), '2.1'))) ">
+  <ItemGroup Condition=" ('$(TargetFrameworkIdentifier)' == '.NETFramework') Or&#xD;&#xA;                ('$(TargetFrameworkIdentifier)' == '.NETStandard' And $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), '2.1'))) ">
     <PackageReference Include="Portable.BouncyCastle" />
   </ItemGroup>
 

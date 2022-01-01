@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using OpenIddict.KeyResolvers.Abstractions;
 using static OpenIddict.Server.AspNetCore.OpenIddictServerAspNetCoreConstants;
 using JsonWebTokenTypes = OpenIddict.Server.AspNetCore.OpenIddictServerAspNetCoreConstants.JsonWebTokenTypes;
 
@@ -158,15 +159,21 @@ public static partial class OpenIddictServerAspNetCoreHandlers
         {
             private readonly IDistributedCache _cache;
             private readonly IOptionsMonitor<OpenIddictServerAspNetCoreOptions> _options;
+            private readonly IOpenIddictEncryptionCredentialsResolver _encryptionCredentialsResolver;
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
 
             public CacheRequestParameters() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0116));
 
             public CacheRequestParameters(
                 IDistributedCache cache,
-                IOptionsMonitor<OpenIddictServerAspNetCoreOptions> options)
+                IOptionsMonitor<OpenIddictServerAspNetCoreOptions> options,
+                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
             {
                 _cache = cache;
                 _options = options;
+                _encryptionCredentialsResolver = encryptionCredentialsResolver;
+                _signingCredentialsResolver = signingCredentialsResolver;
             }
 
             /// <summary>
@@ -226,9 +233,9 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     Claims = context.Request.GetParameters().ToDictionary(
                         parameter => parameter.Key,
                         parameter => parameter.Value.Value),
-                    EncryptingCredentials = context.Options.EncryptionCredentialsResolver?.GetCurrentEncryptionCredential(),
+                    EncryptingCredentials = await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync(),
                     Issuer = context.Issuer?.AbsoluteUri,
-                    SigningCredentials = context.Options.SigningCredentialsResolver?.GetCurrentSigningCredential(),
+                    SigningCredentials = await _signingCredentialsResolver.GetCurrentSigningCredentialAsync(),
                     Subject = new ClaimsIdentity(),
                     TokenType = JsonWebTokenTypes.Private.AuthorizationRequest
                 });

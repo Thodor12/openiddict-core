@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using OpenIddict.KeyResolvers.Abstractions;
 
 namespace OpenIddict.Server;
 
@@ -2620,6 +2621,11 @@ public static partial class OpenIddictServerHandlers
     /// </summary>
     public class AttachTokenDigests : IOpenIddictServerHandler<ProcessSignInContext>
     {
+        private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
+
+        public AttachTokenDigests(IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+            => _signingCredentialsResolver = signingCredentialsResolver;
+
         /// <summary>
         /// Gets the default descriptor definition assigned to this handler.
         /// </summary>
@@ -2632,7 +2638,7 @@ public static partial class OpenIddictServerHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessSignInContext context)
+        public async ValueTask HandleAsync(ProcessSignInContext context)
         {
             if (context is null)
             {
@@ -2646,11 +2652,10 @@ public static partial class OpenIddictServerHandlers
 
             if (string.IsNullOrEmpty(context.AccessToken) && string.IsNullOrEmpty(context.AuthorizationCode))
             {
-                return default;
+                return;
             }
 
-            var credentials = context.Options.SigningCredentialsResolver?.GetSigningCredentials().FirstOrDefault(
-                credentials => credentials.Key is AsymmetricSecurityKey);
+            var credentials = (await _signingCredentialsResolver.GetCurrentSigningCredentialsWithAssymetricKeyAsync()).EnsureIsAsymmetricSecurityKey();
             if (credentials is null)
             {
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0266));
@@ -2680,7 +2685,7 @@ public static partial class OpenIddictServerHandlers
                 context.IdentityTokenPrincipal.SetClaim(Claims.CodeHash, Base64UrlEncoder.Encode(digest, 0, digest.Length / 2));
             }
 
-            return default;
+            return;
 
             static HashAlgorithm? GetHashAlgorithm(SigningCredentials credentials)
             {

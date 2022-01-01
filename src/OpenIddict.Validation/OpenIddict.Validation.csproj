@@ -14,6 +14,7 @@ To use the validation feature on ASP.NET Core or OWIN/Katana, reference the Open
 
   <ItemGroup>
     <ProjectReference Include="..\OpenIddict.Abstractions\OpenIddict.Abstractions.csproj" />
+    <ProjectReference Include="..\OpenIddict.KeyResolvers.Abstractions\OpenIddict.KeyResolvers.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

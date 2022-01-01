@@ -4,15 +4,16 @@
  * the license and the contributors participating to this project.
  */
 
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
+using OpenIddict.KeyResolvers.Abstractions;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.Server;
 
@@ -1006,6 +1007,17 @@ public static partial class OpenIddictServerHandlers
         /// </summary>
         public class AttachSecurityCredentials : IOpenIddictServerHandler<GenerateTokenContext>
         {
+            private readonly IOpenIddictEncryptionCredentialsResolver _encryptionCredentialsResolver;
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
+
+            public AttachSecurityCredentials(
+                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+            {
+                _encryptionCredentialsResolver = encryptionCredentialsResolver;
+                _signingCredentialsResolver = signingCredentialsResolver;
+            }
+
             /// <summary>
             /// Gets the default descriptor definition assigned to this handler.
             /// </summary>
@@ -1017,7 +1029,7 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(GenerateTokenContext context)
+            public async ValueTask HandleAsync(GenerateTokenContext context)
             {
                 if (context is null)
                 {
@@ -1032,20 +1044,19 @@ public static partial class OpenIddictServerHandlers
                     TokenTypeHints.AccessToken when context.Options.DisableAccessTokenEncryption => null,
                     TokenTypeHints.IdToken => null,
 
-                    _ => context.Options.EncryptionCredentialsResolver?.GetEncryptionCredentials().First()
+                    _ => await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync()
                 };
 
                 context.SigningCredentials = context.TokenType switch
                 {
                     // Note: unlike other tokens, identity tokens can only be signed using an asymmetric key
                     // as they are meant to be validated by clients using the public keys exposed by the server.
-                    TokenTypeHints.IdToken => context.Options.SigningCredentialsResolver?.GetSigningCredentials().First(credentials =>
-                        credentials.Key is AsymmetricSecurityKey),
+                    TokenTypeHints.IdToken => (await _signingCredentialsResolver.GetCurrentSigningCredentialsWithAssymetricKeyAsync()).EnsureIsAsymmetricSecurityKey(true),
 
-                    _ => context.Options.SigningCredentialsResolver?.GetSigningCredentials().First()
+                    _ => await _signingCredentialsResolver.GetCurrentSigningCredentialAsync()
                 };
 
-                return default;
+                return;
             }
         }
 

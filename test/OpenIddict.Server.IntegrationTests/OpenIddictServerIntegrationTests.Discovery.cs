@@ -763,8 +763,8 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
-            options.AddSigningCredentials(credentials);
+            options.AddInMemorySigningCredentialsManager()
+                .AddSigningCredentials(credentials);
         });
 
         await using var client = await server.CreateClientAsync();
@@ -783,9 +783,9 @@ public abstract partial class OpenIddictServerIntegrationTests
         // Arrange
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
-            options.AddSigningKey(new SymmetricSecurityKey(new byte[256 / 8]));
-            options.AddSigningCredentials(new SigningCredentials(Mock.Of<AsymmetricSecurityKey>(), Algorithms.RsaSha256));
+            options.AddInMemorySigningCredentialsManager()
+                .AddSigningKey(new SymmetricSecurityKey(new byte[256 / 8]))
+                .AddSigningCredentials(new SigningCredentials(Mock.Of<AsymmetricSecurityKey>(), Algorithms.RsaSha256));
         });
 
         await using var client = await server.CreateClientAsync();
@@ -807,10 +807,10 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
-            options.AddSigningCredentials(credentials);
-            options.AddSigningCredentials(credentials);
-            options.AddSigningCredentials(credentials);
+            options.AddInMemorySigningCredentialsManager()
+                .AddSigningCredentials(credentials)
+                .AddSigningCredentials(credentials)
+                .AddSigningCredentials(credentials);
         });
 
         await using var client = await server.CreateClientAsync();
@@ -1215,7 +1215,8 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.AddSigningCredentials(new SigningCredentials(key, algorithm));
+            options.AddInMemorySigningCredentialsManager()
+                .AddSigningCredentials(new SigningCredentials(key, algorithm));
         });
 
         await using var client = await server.CreateClientAsync();
@@ -1247,8 +1248,8 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
-            options.AddSigningKey(new RsaSecurityKey(parameters));
+            options.AddInMemorySigningCredentialsManager()
+                .AddSigningKey(new RsaSecurityKey(parameters));
         });
 
         await using var client = await server.CreateClientAsync();
@@ -1303,8 +1304,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         await using var server = await CreateServerAsync(options =>
         {
-            options.Configure(options => options.SigningCredentialsResolver.GetSigningCredentials().Clear());
-            options.AddSigningKey(new ECDsaSecurityKey(algorithm));
+            options.AddInMemorySigningCredentialsManager().AddSigningKey(new ECDsaSecurityKey(algorithm));
         });
 
         await using var client = await server.CreateClientAsync();

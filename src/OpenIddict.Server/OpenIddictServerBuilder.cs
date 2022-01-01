@@ -5,13 +5,8 @@
  */
 
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.IdentityModel.Tokens;
+using OpenIddict.KeyResolvers.Abstractions;
 using OpenIddict.Server;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -135,40 +130,26 @@ public class OpenIddictServerBuilder
         => Configure(options => options.AcceptAnonymousClients = true);
 
     /// <summary>
-    /// Registers the default in memory encryption credentials manager.
-    /// </summary>
-    /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder AddInMemoryEncryptionCredentialsManager(Action<OpenIddictServerInMemoryEncryptionCredentialsResolverBuilder> configure)
-    {
-        var builder = new OpenIddictServerInMemoryEncryptionCredentialsResolverBuilder();
-        configure(builder);
-        return AddEncryptionCredentialsManager(builder.Build());
-    }
-
-    /// <summary>
     /// Registers encryption credentials manager.
     /// </summary>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder AddEncryptionCredentialsManager(IOpenIddictServerEncryptionCredentialsResolver resolver) => 
-        Configure(options => options.EncryptionCredentialsResolver = resolver);
-
-    /// <summary>
-    /// Registers the default in memory signing credentials manager.
-    /// </summary>
-    /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder AddInMemorySigningCredentialsManager(Action<OpenIddictServerInMemorySigningCredentialsResolverBuilder> configure)
+    public OpenIddictServerBuilder AddCustomEncryptionCredentialsManager<EncryptionCredentialsManagerType>()
+        where EncryptionCredentialsManagerType : class, IOpenIddictEncryptionCredentialsResolver
     {
-        var builder = new OpenIddictServerInMemorySigningCredentialsResolverBuilder();
-        configure(builder);
-        return AddSigningCredentialsManager(builder.Build());
+        Services.AddSingleton<IOpenIddictEncryptionCredentialsResolver, EncryptionCredentialsManagerType>();
+        return this;
     }
 
     /// <summary>
     /// Registers signing credentials manager.
     /// </summary>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder AddSigningCredentialsManager(IOpenIddictServerSigningCredentialsResolver resolver) =>
-        Configure(options => options.SigningCredentialsResolver = resolver);
+    public OpenIddictServerBuilder AddCustomSigningCredentialsManager<SigningCredentialsManagerType>()
+        where SigningCredentialsManagerType : class, IOpenIddictSigningCredentialsResolver
+    {
+        Services.AddSingleton<IOpenIddictSigningCredentialsResolver, SigningCredentialsManagerType>();
+        return this;
+    }
 
     /// <summary>
     /// Enables authorization code flow support. For more information
