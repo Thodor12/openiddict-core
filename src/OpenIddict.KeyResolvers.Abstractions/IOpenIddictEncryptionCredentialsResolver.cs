@@ -8,13 +8,16 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.KeyResolvers.Abstractions;
 
+/// <summary>
+/// The interface used to implement encryption credential resolvers
+/// </summary>
 public interface IOpenIddictEncryptionCredentialsResolver
 {
     /// <summary>
-    /// 
+    /// Used to return the currently active <see cref="EncryptingCredentials"/> used for new key operations.
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
+    /// <returns>A singular <see cref="EncryptingCredentials"/> for new key operations></returns>
     public Task<EncryptingCredentials> GetCurrentEncryptionCredentialAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -22,7 +25,7 @@ public interface IOpenIddictEncryptionCredentialsResolver
     /// It is recommended to apply some form of caching and verify which keys are valid
     /// before returning the whole list.
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
     /// <returns>A collection of encryption credentials</returns>
     public Task<ICollection<EncryptingCredentials>> GetEncryptionCredentialsAsync(CancellationToken cancellationToken = default);
 }

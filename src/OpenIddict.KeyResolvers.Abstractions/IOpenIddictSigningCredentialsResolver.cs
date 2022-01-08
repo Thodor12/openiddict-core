@@ -8,12 +8,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.KeyResolvers.Abstractions;
 
+/// <summary>
+/// The interface used to implement signing credential resolvers.
+/// </summary>
 public interface IOpenIddictSigningCredentialsResolver
 {
     /// <summary>
     /// Used to return the currently active <see cref="SigningCredentials"/> used for new key operations.
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
     /// <returns>A singular <see cref="SigningCredentials"/> for new key operations</returns>
     public Task<SigningCredentials> GetCurrentSigningCredentialAsync(CancellationToken cancellationToken = default);
 
@@ -22,8 +25,8 @@ public interface IOpenIddictSigningCredentialsResolver
     /// must return a <see cref="SigningCredentials"/> where it's <see cref="SigningCredentials.Key"/>
     /// is an <see cref="AsymmetricSecurityKey"/>.
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
+    /// <returns>A singular <see cref="SigningCredentials"/> for new key operations</returns>
     public Task<SigningCredentials> GetCurrentSigningCredentialsWithAssymetricKeyAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -31,7 +34,7 @@ public interface IOpenIddictSigningCredentialsResolver
     /// It is recommended to apply some form of caching and verify which keys are valid
     /// before returning the whole list.
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
     /// <returns>A collection of signing credentials</returns>
     public Task<ICollection<SigningCredentials>> GetSigningCredentialsAsync(CancellationToken cancellationToken = default);
 }
