@@ -50,6 +50,16 @@ public static partial class OpenIddictServerHandlers
         /// </summary>
         public class ResolveTokenValidationParameters : IOpenIddictServerHandler<ValidateTokenContext>
         {
+            private readonly IOpenIddictEncryptionCredentialsResolver _encryptionCredentialsResolver;
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
+
+            public ResolveTokenValidationParameters(IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+            {
+                _encryptionCredentialsResolver = encryptionCredentialsResolver;
+                _signingCredentialsResolver = signingCredentialsResolver;
+            }
+
             /// <summary>
             /// Gets the default descriptor definition assigned to this handler.
             /// </summary>
@@ -61,7 +71,7 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context)
             {
                 if (context is null)
                 {
@@ -71,6 +81,12 @@ public static partial class OpenIddictServerHandlers
                 var parameters = context.Options.TokenValidationParameters.Clone();
                 parameters.ValidIssuer ??= context.Issuer?.AbsoluteUri;
                 parameters.ValidateIssuer = !string.IsNullOrEmpty(parameters.ValidIssuer);
+                parameters.TokenDecryptionKeys = (await _encryptionCredentialsResolver.GetEncryptionCredentialsAsync())
+                    .EnsureValidEncryptingCredentials()
+                    .Select(s => s.Key);
+                parameters.IssuerSigningKeys = (await _signingCredentialsResolver.GetSigningCredentialsAsync())
+                    .EnsureValidSigningCredentials()
+                    .Select(s => s.Key);
 
                 parameters.ValidTypes = context.ValidTokenTypes.Count switch
                 {
@@ -113,8 +129,6 @@ public static partial class OpenIddictServerHandlers
 
                 context.SecurityTokenHandler = context.Options.JsonWebTokenHandler;
                 context.TokenValidationParameters = parameters;
-
-                return default;
             }
         }
 
@@ -317,9 +331,9 @@ public static partial class OpenIddictServerHandlers
                                 _ => SR.GetResourceString(SR.ID2089)
                             },
 
-                            SecurityTokenInvalidIssuerException        => SR.GetResourceString(SR.ID2088),
+                            SecurityTokenInvalidIssuerException => SR.GetResourceString(SR.ID2088),
                             SecurityTokenSignatureKeyNotFoundException => SR.GetResourceString(SR.ID2090),
-                            SecurityTokenInvalidSignatureException     => SR.GetResourceString(SR.ID2091),
+                            SecurityTokenInvalidSignatureException => SR.GetResourceString(SR.ID2091),
 
                             _ => SR.GetResourceString(SR.ID2004)
                         },
@@ -342,9 +356,9 @@ public static partial class OpenIddictServerHandlers
                                 _ => SR.FormatID8000(SR.ID2089)
                             },
 
-                            SecurityTokenInvalidIssuerException        => SR.FormatID8000(SR.ID2088),
+                            SecurityTokenInvalidIssuerException => SR.FormatID8000(SR.ID2088),
                             SecurityTokenSignatureKeyNotFoundException => SR.FormatID8000(SR.ID2090),
-                            SecurityTokenInvalidSignatureException     => SR.FormatID8000(SR.ID2091),
+                            SecurityTokenInvalidSignatureException => SR.FormatID8000(SR.ID2091),
 
                             _ => SR.FormatID8000(SR.ID2004)
                         });
@@ -353,7 +367,7 @@ public static partial class OpenIddictServerHandlers
                 }
 
                 // Get the JWT token. If the token is encrypted using JWE, retrieve the inner token.
-                var token = (JsonWebToken) result.SecurityToken;
+                var token = (JsonWebToken)result.SecurityToken;
                 if (token.InnerToken is not null)
                 {
                     token = token.InnerToken;
@@ -374,9 +388,9 @@ public static partial class OpenIddictServerHandlers
                         => TokenTypeHints.IdToken,
 
                     JsonWebTokenTypes.Private.AuthorizationCode => TokenTypeHints.AuthorizationCode,
-                    JsonWebTokenTypes.Private.DeviceCode        => TokenTypeHints.DeviceCode,
-                    JsonWebTokenTypes.Private.RefreshToken      => TokenTypeHints.RefreshToken,
-                    JsonWebTokenTypes.Private.UserCode          => TokenTypeHints.UserCode,
+                    JsonWebTokenTypes.Private.DeviceCode => TokenTypeHints.DeviceCode,
+                    JsonWebTokenTypes.Private.RefreshToken => TokenTypeHints.RefreshToken,
+                    JsonWebTokenTypes.Private.UserCode => TokenTypeHints.UserCode,
 
                     _ => throw new InvalidOperationException(SR.GetResourceString(SR.ID0003))
                 });
@@ -703,21 +717,21 @@ public static partial class OpenIddictServerHandlers
                         error: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.DeviceCode => Errors.ExpiredToken,
-                            _                         => Errors.InvalidToken
+                            _ => Errors.InvalidToken
                         },
                         description: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.GetResourceString(SR.ID2016),
-                            TokenTypeHints.DeviceCode        => SR.GetResourceString(SR.ID2017),
-                            TokenTypeHints.RefreshToken      => SR.GetResourceString(SR.ID2018),
+                            TokenTypeHints.DeviceCode => SR.GetResourceString(SR.ID2017),
+                            TokenTypeHints.RefreshToken => SR.GetResourceString(SR.ID2018),
 
                             _ => SR.GetResourceString(SR.ID2019)
                         },
                         uri: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.FormatID8000(SR.ID2016),
-                            TokenTypeHints.DeviceCode        => SR.FormatID8000(SR.ID2017),
-                            TokenTypeHints.RefreshToken      => SR.FormatID8000(SR.ID2018),
+                            TokenTypeHints.DeviceCode => SR.FormatID8000(SR.ID2017),
+                            TokenTypeHints.RefreshToken => SR.FormatID8000(SR.ID2018),
 
                             _ => SR.FormatID8000(SR.ID2019)
                         });
@@ -782,16 +796,16 @@ public static partial class OpenIddictServerHandlers
                         description: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.GetResourceString(SR.ID2001),
-                            TokenTypeHints.DeviceCode        => SR.GetResourceString(SR.ID2002),
-                            TokenTypeHints.RefreshToken      => SR.GetResourceString(SR.ID2003),
+                            TokenTypeHints.DeviceCode => SR.GetResourceString(SR.ID2002),
+                            TokenTypeHints.RefreshToken => SR.GetResourceString(SR.ID2003),
 
                             _ => SR.GetResourceString(SR.ID2004)
                         },
                         uri: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.FormatID8000(SR.ID2001),
-                            TokenTypeHints.DeviceCode        => SR.FormatID8000(SR.ID2002),
-                            TokenTypeHints.RefreshToken      => SR.FormatID8000(SR.ID2003),
+                            TokenTypeHints.DeviceCode => SR.FormatID8000(SR.ID2002),
+                            TokenTypeHints.RefreshToken => SR.FormatID8000(SR.ID2003),
 
                             _ => SR.FormatID8000(SR.ID2004)
                         });
@@ -815,16 +829,16 @@ public static partial class OpenIddictServerHandlers
                             description: context.Principal.GetTokenType() switch
                             {
                                 TokenTypeHints.AuthorizationCode => SR.GetResourceString(SR.ID2010),
-                                TokenTypeHints.DeviceCode        => SR.GetResourceString(SR.ID2011),
-                                TokenTypeHints.RefreshToken      => SR.GetResourceString(SR.ID2012),
+                                TokenTypeHints.DeviceCode => SR.GetResourceString(SR.ID2011),
+                                TokenTypeHints.RefreshToken => SR.GetResourceString(SR.ID2012),
 
                                 _ => SR.GetResourceString(SR.ID2013)
                             },
                             uri: context.Principal.GetTokenType() switch
                             {
                                 TokenTypeHints.AuthorizationCode => SR.FormatID8000(SR.ID2010),
-                                TokenTypeHints.DeviceCode        => SR.FormatID8000(SR.ID2011),
-                                TokenTypeHints.RefreshToken      => SR.FormatID8000(SR.ID2012),
+                                TokenTypeHints.DeviceCode => SR.FormatID8000(SR.ID2011),
+                                TokenTypeHints.RefreshToken => SR.FormatID8000(SR.ID2012),
 
                                 _ => SR.FormatID8000(SR.ID2013)
                             });
@@ -873,16 +887,16 @@ public static partial class OpenIddictServerHandlers
                         description: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.GetResourceString(SR.ID2016),
-                            TokenTypeHints.DeviceCode        => SR.GetResourceString(SR.ID2017),
-                            TokenTypeHints.RefreshToken      => SR.GetResourceString(SR.ID2018),
+                            TokenTypeHints.DeviceCode => SR.GetResourceString(SR.ID2017),
+                            TokenTypeHints.RefreshToken => SR.GetResourceString(SR.ID2018),
 
                             _ => SR.GetResourceString(SR.ID2019)
                         },
                         uri: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.FormatID8000(SR.ID2016),
-                            TokenTypeHints.DeviceCode        => SR.FormatID8000(SR.ID2017),
-                            TokenTypeHints.RefreshToken      => SR.FormatID8000(SR.ID2018),
+                            TokenTypeHints.DeviceCode => SR.FormatID8000(SR.ID2017),
+                            TokenTypeHints.RefreshToken => SR.FormatID8000(SR.ID2018),
 
                             _ => SR.FormatID8000(SR.ID2019)
                         });
@@ -983,16 +997,16 @@ public static partial class OpenIddictServerHandlers
                         description: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.GetResourceString(SR.ID2020),
-                            TokenTypeHints.DeviceCode        => SR.GetResourceString(SR.ID2021),
-                            TokenTypeHints.RefreshToken      => SR.GetResourceString(SR.ID2022),
+                            TokenTypeHints.DeviceCode => SR.GetResourceString(SR.ID2021),
+                            TokenTypeHints.RefreshToken => SR.GetResourceString(SR.ID2022),
 
                             _ => SR.GetResourceString(SR.ID2023)
                         },
                         uri: context.Principal.GetTokenType() switch
                         {
                             TokenTypeHints.AuthorizationCode => SR.FormatID8000(SR.ID2020),
-                            TokenTypeHints.DeviceCode        => SR.FormatID8000(SR.ID2021),
-                            TokenTypeHints.RefreshToken      => SR.FormatID8000(SR.ID2022),
+                            TokenTypeHints.DeviceCode => SR.FormatID8000(SR.ID2021),
+                            TokenTypeHints.RefreshToken => SR.FormatID8000(SR.ID2022),
 
                             _ => SR.FormatID8000(SR.ID2023)
                         });
@@ -1044,16 +1058,16 @@ public static partial class OpenIddictServerHandlers
                     TokenTypeHints.AccessToken when context.Options.DisableAccessTokenEncryption => null,
                     TokenTypeHints.IdToken => null,
 
-                    _ => await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync()
+                    _ => (await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync()).EnsureValidEncryptingCredentials()
                 };
 
                 context.SigningCredentials = context.TokenType switch
                 {
                     // Note: unlike other tokens, identity tokens can only be signed using an asymmetric key
                     // as they are meant to be validated by clients using the public keys exposed by the server.
-                    TokenTypeHints.IdToken => (await _signingCredentialsResolver.GetCurrentSigningCredentialsWithAssymetricKeyAsync()).EnsureIsAsymmetricSecurityKey(true),
+                    TokenTypeHints.IdToken => (await _signingCredentialsResolver.GetCurrentSigningCredentialsWithAssymetricKeyAsync()).EnsureValidSigningCredentials(),
 
-                    _ => await _signingCredentialsResolver.GetCurrentSigningCredentialAsync()
+                    _ => (await _signingCredentialsResolver.GetCurrentSigningCredentialAsync()).EnsureValidSigningCredentials()
                 };
 
                 return;
@@ -1238,8 +1252,8 @@ public static partial class OpenIddictServerHandlers
 
                 // For authorization/device/user codes and refresh tokens,
                 // attach claims destinations to the JWT claims collection.
-                if (context.TokenType is TokenTypeHints.AuthorizationCode or TokenTypeHints.DeviceCode or 
-                                         TokenTypeHints.RefreshToken      or TokenTypeHints.UserCode)
+                if (context.TokenType is TokenTypeHints.AuthorizationCode or TokenTypeHints.DeviceCode or
+                                         TokenTypeHints.RefreshToken or TokenTypeHints.UserCode)
                 {
                     var destinations = principal.GetDestinations();
                     if (destinations.Count != 0)
@@ -1256,17 +1270,17 @@ public static partial class OpenIddictServerHandlers
                     IssuedAt = context.Principal.GetCreationDate()?.UtcDateTime,
                     Issuer = context.Issuer?.AbsoluteUri,
                     SigningCredentials = context.SigningCredentials,
-                    Subject = (ClaimsIdentity) principal.Identity,
+                    Subject = (ClaimsIdentity)principal.Identity,
                     TokenType = context.TokenType switch
                     {
                         null or { Length: 0 } => throw new InvalidOperationException(SR.GetResourceString(SR.ID0025)),
 
-                        TokenTypeHints.AccessToken       => JsonWebTokenTypes.AccessToken,
-                        TokenTypeHints.IdToken           => JsonWebTokenTypes.IdentityToken,
+                        TokenTypeHints.AccessToken => JsonWebTokenTypes.AccessToken,
+                        TokenTypeHints.IdToken => JsonWebTokenTypes.IdentityToken,
                         TokenTypeHints.AuthorizationCode => JsonWebTokenTypes.Private.AuthorizationCode,
-                        TokenTypeHints.DeviceCode        => JsonWebTokenTypes.Private.DeviceCode,
-                        TokenTypeHints.RefreshToken      => JsonWebTokenTypes.Private.RefreshToken,
-                        TokenTypeHints.UserCode          => JsonWebTokenTypes.Private.UserCode,
+                        TokenTypeHints.DeviceCode => JsonWebTokenTypes.Private.DeviceCode,
+                        TokenTypeHints.RefreshToken => JsonWebTokenTypes.Private.RefreshToken,
+                        TokenTypeHints.UserCode => JsonWebTokenTypes.Private.UserCode,
 
                         _ => throw new InvalidOperationException(SR.GetResourceString(SR.ID0003))
                     }

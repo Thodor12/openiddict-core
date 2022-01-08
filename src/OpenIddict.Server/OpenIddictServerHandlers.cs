@@ -2655,7 +2655,7 @@ public static partial class OpenIddictServerHandlers
                 return;
             }
 
-            var credentials = (await _signingCredentialsResolver.GetCurrentSigningCredentialsWithAssymetricKeyAsync()).EnsureIsAsymmetricSecurityKey();
+            var credentials = (await _signingCredentialsResolver.GetCurrentSigningCredentialsWithAssymetricKeyAsync()).EnsureValidSigningCredentials();
             if (credentials is null)
             {
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0266));

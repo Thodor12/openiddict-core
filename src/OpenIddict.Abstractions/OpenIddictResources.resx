@@ -408,11 +408,11 @@ To enable DI support, call 'services.AddQuartz(options =&gt; options.UseMicrosof
   </data>
   <data name="ID0085" xml:space="preserve">
     <value>At least one encryption key must be registered in the OpenIddict server options.
-Consider registering a certificate using 'services.AddOpenIddict().AddServer().AddEncryptionCertificate()' or 'services.AddOpenIddict().AddServer().AddDevelopmentEncryptionCertificate()' or call 'services.AddOpenIddict().AddServer().AddEphemeralEncryptionKey()' to use an ephemeral key.</value>
+Consider registering a certificate using 'services.AddOpenIddict().AddServer().AddInMemoryEncryptionCredentialsManager().AddEncryptionCertificate()' or 'services.AddOpenIddict().AddServer().AddInMemoryEncryptionCredentialsManager().AddDevelopmentEncryptionCertificate()' or call 'services.AddOpenIddict().AddServer().AddEphemeralEncryptionKey()' to use an ephemeral key.</value>
   </data>
   <data name="ID0086" xml:space="preserve">
     <value>At least one asymmetric signing key must be registered in the OpenIddict server options.
-Consider registering a certificate using 'services.AddOpenIddict().AddServer().AddSigningCertificate()' or 'services.AddOpenIddict().AddServer().AddDevelopmentSigningCertificate()' or call 'services.AddOpenIddict().AddServer().AddEphemeralSigningKey()' to use an ephemeral key.</value>
+Consider registering a certificate using 'services.AddOpenIddict().AddServer().AddInMemorySigningCredentialsManager().AddSigningCertificate()' or 'services.AddOpenIddict().AddServer().AddInMemorySigningCredentialsManager().AddDevelopmentSigningCertificate()' or call 'services.AddOpenIddict().AddServer().AddEphemeralSigningKey()' to use an ephemeral key.</value>
   </data>
   <data name="ID0087" xml:space="preserve">
     <value>When using X.509 encryption credentials, at least one of the registered certificates must be valid.

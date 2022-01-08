@@ -11,20 +11,48 @@ namespace OpenIddict.KeyResolvers.Abstractions;
 public static class IOpenIddictSigningCredentialsExtensions
 {
     /// <summary>
-    /// Extension method to ensure that the key of the signing credentials is a <see cref="AsymmetricSecurityKey"/>
+    /// Ensure the given encryption key is valid.
+    /// It must be present, and if it's an X.509 key the certificate must not be expired.
     /// </summary>
-    /// <param name="credentials">The signing credentials to verify</param>
-    /// <param name="throwException">Whether to throw an exception if the key is not of the right type or return null</param>
-    /// <returns>The same signing credentials or null if the key is not an <see cref="AsymmetricSecurityKey"/></returns>
-    public static SigningCredentials EnsureIsAsymmetricSecurityKey(this SigningCredentials credentials, bool throwException = false)
+    /// <param name="signingCredentials">The given signing credentials</param>
+    /// <returns>The identical signing credentials</returns>
+    public static SigningCredentials EnsureValidSigningCredentials(this SigningCredentials signingCredentials)
     {
-        if (credentials.Key is AsymmetricSecurityKey)
+        ValidateSigningCredentials(new List<SigningCredentials>() { signingCredentials });
+        return signingCredentials;
+    }
+
+    /// <summary>
+    /// Ensure the given collection of keys has at least one valid key.
+    /// There must be ast least one key present, and if all the keys are X.509 keys at least one must not be expired.
+    /// </summary>
+    /// <param name="signingCredentials">The list of given signing credentials</param>
+    /// <returns>The identical list of signing credentials</returns>
+    public static ICollection<SigningCredentials> EnsureValidSigningCredentials(this ICollection<SigningCredentials> signingCredentials)
+    {
+        ValidateSigningCredentials(signingCredentials);
+        return signingCredentials;
+    }
+
+    private static void ValidateSigningCredentials(ICollection<SigningCredentials> signingCredentials)
+    {
+        // Make sure there's at least one key present
+        if (signingCredentials.Count == 0)
         {
-            return credentials;
+            throw new InvalidOperationException(SR.GetResourceString(SR.ID0085));
         }
-        else
+
+        // Make sure there's at least one AsymmetricSecurityKey
+        if (!signingCredentials.Any(credentials => credentials.Key is AsymmetricSecurityKey))
         {
-            return throwException ? throw new ArgumentException("The provided signing credentials do not contain an AsymmetricSecurityKey") : null;
+            throw new InvalidOperationException(SR.GetResourceString(SR.ID0085));
+        }
+
+        // If all the registered signing credentials are backed by a X.509 certificate, at least one of them must be valid.
+        if (signingCredentials.All(credentials => credentials.Key is X509SecurityKey x509SecurityKey &&
+               (x509SecurityKey.Certificate.NotBefore > DateTime.Now || x509SecurityKey.Certificate.NotAfter < DateTime.Now)))
+        {
+            throw new InvalidOperationException(SR.GetResourceString(SR.ID0087));
         }
     }
 }

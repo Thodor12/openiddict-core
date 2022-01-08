@@ -57,11 +57,19 @@ public static partial class OpenIddictServerOwinHandlers
         public class RestoreCachedRequestParameters : IOpenIddictServerHandler<ExtractLogoutRequestContext>
         {
             private readonly IDistributedCache _cache;
+            private readonly IOpenIddictEncryptionCredentialsResolver _encryptionCredentialsResolver;
+            private readonly IOpenIddictSigningCredentialsResolver _signingCredentialsResolver;
 
             public RestoreCachedRequestParameters() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0116));
 
-            public RestoreCachedRequestParameters(IDistributedCache cache)
-                => _cache = cache;
+            public RestoreCachedRequestParameters(IDistributedCache cache,
+                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+            {
+                _cache = cache;
+                _encryptionCredentialsResolver = encryptionCredentialsResolver;
+                _signingCredentialsResolver = signingCredentialsResolver;
+            }
 
             /// <summary>
             /// Gets the default descriptor definition assigned to this handler.
@@ -112,6 +120,12 @@ public static partial class OpenIddictServerOwinHandlers
                 parameters.ValidIssuer ??= context.Issuer?.AbsoluteUri;
                 parameters.ValidAudience = context.Issuer?.AbsoluteUri;
                 parameters.ValidTypes = new[] { JsonWebTokenTypes.Private.LogoutRequest };
+                parameters.TokenDecryptionKeys = (await _encryptionCredentialsResolver.GetEncryptionCredentialsAsync())
+                    .EnsureValidEncryptingCredentials()
+                    .Select(s => s.Key);
+                parameters.IssuerSigningKeys = (await _signingCredentialsResolver.GetSigningCredentialsAsync())
+                    .EnsureValidSigningCredentials()
+                    .Select(s => s.Key);
 
                 var result = context.Options.JsonWebTokenHandler.ValidateToken(token, parameters);
                 if (!result.IsValid)
@@ -224,9 +238,9 @@ public static partial class OpenIddictServerOwinHandlers
                     Claims = context.Request.GetParameters().ToDictionary(
                         parameter => parameter.Key,
                         parameter => parameter.Value.Value),
-                    EncryptingCredentials = await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync(),
+                    EncryptingCredentials = (await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync()).EnsureValidEncryptingCredentials(),
                     Issuer = context.Issuer?.AbsoluteUri,
-                    SigningCredentials = await _signingCredentialsResolver.GetCurrentSigningCredentialAsync(),
+                    SigningCredentials = (await _signingCredentialsResolver.GetCurrentSigningCredentialAsync()).EnsureValidSigningCredentials(),
                     Subject = new ClaimsIdentity(),
                     TokenType = JsonWebTokenTypes.Private.LogoutRequest
                 });

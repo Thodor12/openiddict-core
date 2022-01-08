@@ -177,7 +177,7 @@ public class OpenIddictServerBuilderTests
 
         // Assert
         Assert.NotNull(encryptionCredentialsResolver);
-        Assert.Same(key, (await encryptionCredentialsResolver!.GetEncryptionCredentialsAsync()).First().Key);
+        Assert.Same(key, (await encryptionCredentialsResolver!.GetEncryptionCredentialsAsync()).EnsureValidEncryptingCredentials().First().Key);
     }
 
     [Fact]
@@ -296,6 +296,7 @@ public class OpenIddictServerBuilderTests
         // Assert
         Assert.NotNull(encryptionCredentialsResolver);
         var encryptingCredentials = await encryptionCredentialsResolver!.GetEncryptionCredentialsAsync();
+        encryptingCredentials.EnsureValidEncryptingCredentials();
         Assert.Single(encryptingCredentials);
         Assert.Equal(SecurityAlgorithms.RsaOAEP, encryptingCredentials.First().Alg);
         Assert.Equal(SecurityAlgorithms.Aes256CbcHmacSha512, encryptingCredentials.First().Enc);
@@ -348,6 +349,7 @@ public class OpenIddictServerBuilderTests
 
         // Assert
         var signingCredentials = await signingCredentialsResolver.GetSigningCredentialsAsync();
+        signingCredentials.EnsureValidSigningCredentials();
         Assert.Single(signingCredentials);
         Assert.Equal(SecurityAlgorithms.RsaSha256, signingCredentials.First().Algorithm);
         Assert.NotNull(signingCredentials.First().Kid);
@@ -381,7 +383,7 @@ public class OpenIddictServerBuilderTests
         var signingCredentialsResolver = services.BuildServiceProvider().GetRequiredService<IOpenIddictSigningCredentialsResolver>();
 
         // Assert
-        Assert.Single(await signingCredentialsResolver.GetSigningCredentialsAsync());
+        Assert.Single((await signingCredentialsResolver.GetSigningCredentialsAsync()).EnsureValidSigningCredentials());
     }
 
     [Theory]
@@ -405,7 +407,7 @@ public class OpenIddictServerBuilderTests
         var signingCredentialsResolver = services.BuildServiceProvider().GetRequiredService<IOpenIddictSigningCredentialsResolver>();
 
         // Assert
-        var credentials = (await signingCredentialsResolver.GetSigningCredentialsAsync()).First();
+        var credentials = (await signingCredentialsResolver.GetSigningCredentialsAsync()).EnsureValidSigningCredentials().First();
         Assert.Equal(algorithm, credentials?.Algorithm);
     }
 
@@ -456,7 +458,7 @@ public class OpenIddictServerBuilderTests
         var signingCredentialsResolver = services.BuildServiceProvider().GetRequiredService<IOpenIddictSigningCredentialsResolver>();
 
         // Assert
-        Assert.Same(key, (await signingCredentialsResolver.GetSigningCredentialsAsync()).First().Key);
+        Assert.Same(key, (await signingCredentialsResolver.GetSigningCredentialsAsync()).EnsureValidSigningCredentials().First().Key);
     }
 
     [Fact]
@@ -475,7 +477,7 @@ public class OpenIddictServerBuilderTests
         var signingCredentialsResolver = services.BuildServiceProvider().GetRequiredService<IOpenIddictSigningCredentialsResolver>();
 
         // Assert
-        Assert.IsType<X509SecurityKey>((await signingCredentialsResolver.GetSigningCredentialsAsync()).First().Key);
+        Assert.IsType<X509SecurityKey>((await signingCredentialsResolver.GetSigningCredentialsAsync()).EnsureValidSigningCredentials().First().Key);
     }
 
     [Fact]

@@ -680,7 +680,9 @@ public static partial class OpenIddictServerHandlers
                     throw new ArgumentNullException(nameof(context));
                 }
 
-                foreach (var credentials in await _signingCredentialsResolver.GetSigningCredentialsAsync())
+                var signingCredentials = await _signingCredentialsResolver.GetSigningCredentialsAsync();
+                signingCredentials.EnsureValidSigningCredentials();
+                foreach (var credentials in signingCredentials)
                 {
                     // Try to resolve the JWA algorithm short name.
                     var algorithm = credentials.Algorithm switch
@@ -1079,7 +1081,9 @@ public static partial class OpenIddictServerHandlers
                     throw new ArgumentNullException(nameof(context));
                 }
 
-                foreach (var credentials in await _signingCredentialsResolver.GetSigningCredentialsAsync())
+                var signingCredentials = await _signingCredentialsResolver.GetSigningCredentialsAsync();
+                signingCredentials.EnsureValidSigningCredentials();
+                foreach (var credentials in signingCredentials)
                 {
 #if SUPPORTS_ECDSA
                     if (!credentials.Key.IsSupportedAlgorithm(SecurityAlgorithms.RsaSha256) &&

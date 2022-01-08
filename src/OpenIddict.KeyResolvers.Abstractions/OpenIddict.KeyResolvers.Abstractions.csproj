@@ -18,4 +18,9 @@
     <ProjectReference Include="..\OpenIddict.Abstractions\OpenIddict.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+	<Using Include="OpenIddict.Abstractions.OpenIddictConstants" Static="true" />
+	<Using Include="OpenIddict.Abstractions.OpenIddictResources" Alias="SR" />
+  </ItemGroup>
+
 </Project>
