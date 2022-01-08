@@ -1256,7 +1256,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         // Act
         var response = await client.GetAsync("/.well-known/jwks");
-        var key = response[Parameters.Keys]?[0];
+        var key = response[Parameters.Keys]?[1]; // We have to use the second key as it's no longer possible to clear the existing key added through the server builder
 
         // Assert
         Assert.Null(key?[JsonWebKeyParameterNames.D]);
@@ -1311,7 +1311,7 @@ public abstract partial class OpenIddictServerIntegrationTests
 
         // Act
         var response = await client.GetAsync("/.well-known/jwks");
-        var key = response[Parameters.Keys]?[0];
+        var key = response[Parameters.Keys]?[1];
 
         // Assert
         Assert.Null(key?[JsonWebKeyParameterNames.D]);
