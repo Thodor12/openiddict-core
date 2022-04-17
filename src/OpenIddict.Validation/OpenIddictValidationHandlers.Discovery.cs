@@ -5,6 +5,7 @@
  */
 
 using System.Collections.Immutable;
+using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.Validation;
@@ -18,18 +19,92 @@ public static partial class OpenIddictValidationHandlers
              * Configuration response handling:
              */
             HandleErrorResponse<HandleConfigurationResponseContext>.Descriptor,
+            ValidateWellKnownConfigurationParameters.Descriptor,
             ValidateIssuer.Descriptor,
             ExtractCryptographyEndpoint.Descriptor,
             ExtractIntrospectionEndpoint.Descriptor,
+            ExtractIntrospectionEndpointClientAuthenticationMethods.Descriptor,
 
             /*
              * Cryptography response handling:
              */
             HandleErrorResponse<HandleCryptographyResponseContext>.Descriptor,
+            ValidateWellKnownCryptographyParameters.Descriptor,
             ExtractSigningKeys.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of extracting the issuer from the discovery document.
+        /// Contains the logic responsible for validating the well-known parameters contained in the configuration response.
+        /// </summary>
+        public class ValidateWellKnownConfigurationParameters : IOpenIddictValidationHandler<HandleConfigurationResponseContext>
+        {
+            /// <summary>
+            /// Gets the default descriptor definition assigned to this handler.
+            /// </summary>
+            public static OpenIddictValidationHandlerDescriptor Descriptor { get; }
+                = OpenIddictValidationHandlerDescriptor.CreateBuilder<HandleConfigurationResponseContext>()
+                    .UseSingletonHandler<ValidateWellKnownConfigurationParameters>()
+                    .SetOrder(HandleErrorResponse<HandleConfigurationResponseContext>.Descriptor.Order + 1_000)
+                    .SetType(OpenIddictValidationHandlerType.BuiltIn)
+                    .Build();
+
+            /// <inheritdoc/>
+            public ValueTask HandleAsync(HandleConfigurationResponseContext context!!)
+            {
+                foreach (var parameter in context.Response.GetParameters())
+                {
+                    if (!ValidateParameterType(parameter.Key, parameter.Value))
+                    {
+                        context.Reject(
+                            error: Errors.ServerError,
+                            description: SR.FormatID2107(parameter.Key),
+                            uri: SR.FormatID8000(SR.ID2107));
+
+                        return default;
+                    }
+                }
+
+                return default;
+
+                // Note: in the typical case, the response parameters should be deserialized from a
+                // JSON response and thus natively stored as System.Text.Json.JsonElement instances.
+                //
+                // In the rare cases where the underlying value wouldn't be a JsonElement instance
+                // (e.g when custom parameters are manually added to the response), the static
+                // conversion operator would take care of converting the underlying value to a
+                // JsonElement instance using the same value type as the original parameter value.
+                static bool ValidateParameterType(string name, OpenIddictParameter value) => name switch
+                {
+                    // The following parameters MUST be formatted as unique strings:
+                    Metadata.IntrospectionEndpoint or
+                    Metadata.Issuer
+                        => ((JsonElement) value).ValueKind is JsonValueKind.String,
+
+                    // The following parameters MUST be formatted as arrays of strings:
+                    Metadata.IntrospectionEndpointAuthMethodsSupported
+                        => ((JsonElement) value) is JsonElement element &&
+                            element.ValueKind is JsonValueKind.Array && ValidateStringArray(element),
+
+                    // Parameters that are not in the well-known list can be of any type.
+                    _ => true
+                };
+
+                static bool ValidateStringArray(JsonElement element)
+                {
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        if (item.ValueKind is not JsonValueKind.String)
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Contains the logic responsible for extracting the issuer from the discovery document.
         /// </summary>
         public class ValidateIssuer : IOpenIddictValidationHandler<HandleConfigurationResponseContext>
         {
@@ -39,18 +114,13 @@ public static partial class OpenIddictValidationHandlers
             public static OpenIddictValidationHandlerDescriptor Descriptor { get; }
                 = OpenIddictValidationHandlerDescriptor.CreateBuilder<HandleConfigurationResponseContext>()
                     .UseSingletonHandler<ValidateIssuer>()
-                    .SetOrder(HandleErrorResponse<HandleConfigurationResponseContext>.Descriptor.Order + 1_000)
+                    .SetOrder(ValidateWellKnownConfigurationParameters.Descriptor.Order + 1_000)
                     .SetType(OpenIddictValidationHandlerType.BuiltIn)
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleConfigurationResponseContext context)
+            public ValueTask HandleAsync(HandleConfigurationResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // The issuer returned in the discovery document must exactly match the URL used to access it.
                 // See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationValidation.
                 var issuer = (string?) context.Response[Metadata.Issuer];
@@ -74,24 +144,14 @@ public static partial class OpenIddictValidationHandlers
                     return default;
                 }
 
-                if (context.Issuer is not null && context.Issuer != address)
-                {
-                    context.Reject(
-                        error: Errors.ServerError,
-                        description: SR.GetResourceString(SR.ID2098),
-                        uri: SR.FormatID8000(SR.ID2098));
-
-                    return default;
-                }
-
-                context.Configuration.Issuer = issuer;
+                context.Configuration.Issuer = address;
 
                 return default;
             }
         }
 
         /// <summary>
-        /// Contains the logic responsible of extracting the JWKS endpoint address from the discovery document.
+        /// Contains the logic responsible for extracting the JWKS endpoint address from the discovery document.
         /// </summary>
         public class ExtractCryptographyEndpoint : IOpenIddictValidationHandler<HandleConfigurationResponseContext>
         {
@@ -106,13 +166,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleConfigurationResponseContext context)
+            public ValueTask HandleAsync(HandleConfigurationResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // Note: the jwks_uri node is required by the OpenID Connect discovery specification.
                 // See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationValidation.
                 var address = (string?) context.Response[Metadata.JwksUri];
@@ -126,24 +181,24 @@ public static partial class OpenIddictValidationHandlers
                     return default;
                 }
 
-                if (!Uri.IsWellFormedUriString(address, UriKind.Absolute))
+                if (!Uri.TryCreate(address, UriKind.Absolute, out Uri? uri) || !uri.IsWellFormedOriginalString())
                 {
                     context.Reject(
                         error: Errors.ServerError,
-                        description: SR.GetResourceString(SR.ID2100),
+                        description: SR.FormatID2100(Metadata.JwksUri),
                         uri: SR.FormatID8000(SR.ID2100));
 
                     return default;
                 }
 
-                context.Configuration.JwksUri = address;
+                context.Configuration.JwksUri = uri;
 
                 return default;
             }
         }
 
         /// <summary>
-        /// Contains the logic responsible of extracting the introspection endpoint address from the discovery document.
+        /// Contains the logic responsible for extracting the introspection endpoint address from the discovery document.
         /// </summary>
         public class ExtractIntrospectionEndpoint : IOpenIddictValidationHandler<HandleConfigurationResponseContext>
         {
@@ -158,38 +213,59 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleConfigurationResponseContext context)
+            public ValueTask HandleAsync(HandleConfigurationResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var address = (string?) context.Response[Metadata.IntrospectionEndpoint];
-                if (!string.IsNullOrEmpty(address) && !Uri.IsWellFormedUriString(address, UriKind.Absolute))
+                if (!string.IsNullOrEmpty(address))
                 {
-                    context.Reject(
-                        error: Errors.ServerError,
-                        description: SR.GetResourceString(SR.ID2101),
-                        uri: SR.FormatID8000(SR.ID2101));
+                    if (!Uri.TryCreate(address, UriKind.Absolute, out Uri? uri) || !uri.IsWellFormedOriginalString())
+                    {
+                        context.Reject(
+                            error: Errors.ServerError,
+                            description: SR.FormatID2100(Metadata.IntrospectionEndpoint),
+                            uri: SR.FormatID8000(SR.ID2100));
 
-                    return default;
+                        return default;
+                    }
+
+                    context.Configuration.IntrospectionEndpoint = uri;
                 }
 
-                context.Configuration.IntrospectionEndpoint = address;
+                return default;
+            }
+        }
 
+        /// <summary>
+        /// Contains the logic responsible for extracting the authentication methods
+        /// supported by the introspection endpoint from the discovery document.
+        /// </summary>
+        public class ExtractIntrospectionEndpointClientAuthenticationMethods : IOpenIddictValidationHandler<HandleConfigurationResponseContext>
+        {
+            /// <summary>
+            /// Gets the default descriptor definition assigned to this handler.
+            /// </summary>
+            public static OpenIddictValidationHandlerDescriptor Descriptor { get; }
+                = OpenIddictValidationHandlerDescriptor.CreateBuilder<HandleConfigurationResponseContext>()
+                    .UseSingletonHandler<ExtractIntrospectionEndpoint>()
+                    .SetOrder(ExtractIntrospectionEndpoint.Descriptor.Order + 1_000)
+                    .SetType(OpenIddictValidationHandlerType.BuiltIn)
+                    .Build();
+
+            /// <inheritdoc/>
+            public ValueTask HandleAsync(HandleConfigurationResponseContext context!!)
+            {
                 // Resolve the client authentication methods supported by the introspection endpoint, if available.
-                if (context.Response.TryGetParameter(Metadata.IntrospectionEndpointAuthMethodsSupported, out var methods))
+                var methods = context.Response[Metadata.IntrospectionEndpointAuthMethodsSupported]?.GetUnnamedParameters();
+                if (methods is { Count: > 0 })
                 {
-                    foreach (var method in methods.GetUnnamedParameters())
+                    for (var index = 0; index < methods.Count; index++)
                     {
-                        var value = (string?) method;
-                        if (string.IsNullOrEmpty(value))
+                        // Note: custom values are allowed in this case.
+                        var method = (string?) methods[index];
+                        if (!string.IsNullOrEmpty(method))
                         {
-                            continue;
+                            context.Configuration.IntrospectionEndpointAuthMethodsSupported.Add(method);
                         }
-
-                        context.Configuration.IntrospectionEndpointAuthMethodsSupported.Add(value);
                     }
                 }
 
@@ -198,7 +274,72 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of extracting the signing keys from the JWKS document.
+        /// Contains the logic responsible for validating the well-known parameters contained in the JWKS response.
+        /// </summary>
+        public class ValidateWellKnownCryptographyParameters : IOpenIddictValidationHandler<HandleCryptographyResponseContext>
+        {
+            /// <summary>
+            /// Gets the default descriptor definition assigned to this handler.
+            /// </summary>
+            public static OpenIddictValidationHandlerDescriptor Descriptor { get; }
+                = OpenIddictValidationHandlerDescriptor.CreateBuilder<HandleCryptographyResponseContext>()
+                    .UseSingletonHandler<ValidateWellKnownCryptographyParameters>()
+                    .SetOrder(HandleErrorResponse<HandleCryptographyResponseContext>.Descriptor.Order + 1_000)
+                    .SetType(OpenIddictValidationHandlerType.BuiltIn)
+                    .Build();
+
+            /// <inheritdoc/>
+            public ValueTask HandleAsync(HandleCryptographyResponseContext context!!)
+            {
+                foreach (var parameter in context.Response.GetParameters())
+                {
+                    if (!ValidateParameterType(parameter.Key, parameter.Value))
+                    {
+                        context.Reject(
+                            error: Errors.ServerError,
+                            description: SR.FormatID2107(parameter.Key),
+                            uri: SR.FormatID8000(SR.ID2107));
+
+                        return default;
+                    }
+                }
+
+                return default;
+
+                // Note: in the typical case, the response parameters should be deserialized from a
+                // JSON response and thus natively stored as System.Text.Json.JsonElement instances.
+                //
+                // In the rare cases where the underlying value wouldn't be a JsonElement instance
+                // (e.g when custom parameters are manually added to the response), the static
+                // conversion operator would take care of converting the underlying value to a
+                // JsonElement instance using the same value type as the original parameter value.
+                static bool ValidateParameterType(string name, OpenIddictParameter value) => name switch
+                {
+                    // The following parameters MUST be formatted as arrays of objects:
+                    JsonWebKeySetParameterNames.Keys => ((JsonElement) value) is JsonElement element &&
+                        element.ValueKind is JsonValueKind.Array && ValidateObjectArray(element),
+
+                    // Parameters that are not in the well-known list can be of any type.
+                    _ => true
+                };
+
+                static bool ValidateObjectArray(JsonElement element)
+                {
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        if (item.ValueKind is not JsonValueKind.Object)
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Contains the logic responsible for extracting the signing keys from the JWKS document.
         /// </summary>
         public class ExtractSigningKeys : IOpenIddictValidationHandler<HandleCryptographyResponseContext>
         {
@@ -208,20 +349,15 @@ public static partial class OpenIddictValidationHandlers
             public static OpenIddictValidationHandlerDescriptor Descriptor { get; }
                 = OpenIddictValidationHandlerDescriptor.CreateBuilder<HandleCryptographyResponseContext>()
                     .UseSingletonHandler<ExtractSigningKeys>()
-                    .SetOrder(HandleErrorResponse<HandleCryptographyResponseContext>.Descriptor.Order + 1_000)
+                    .SetOrder(ValidateWellKnownCryptographyParameters.Descriptor.Order + 1_000)
                     .SetType(OpenIddictValidationHandlerType.BuiltIn)
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleCryptographyResponseContext context)
+            public ValueTask HandleAsync(HandleCryptographyResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var keys = context.Response[JsonWebKeySetParameterNames.Keys]?.GetUnnamedParameters();
-                if (keys is null || keys.Count == 0)
+                if (keys is not { Count: > 0 })
                 {
                     context.Reject(
                         error: Errors.ServerError,

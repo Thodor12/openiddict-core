@@ -17,6 +17,7 @@ public static partial class OpenIddictValidationHandlers
          * Authentication processing:
          */
         EvaluateValidatedTokens.Descriptor,
+        ValidateRequiredTokens.Descriptor,
         ValidateAccessToken.Descriptor,
 
         /*
@@ -29,7 +30,7 @@ public static partial class OpenIddictValidationHandlers
         .AddRange(Protection.DefaultHandlers);
 
     /// <summary>
-    /// Contains the logic responsible of selecting the token types that should be validated.
+    /// Contains the logic responsible for selecting the token types that should be validated.
     /// </summary>
     public class EvaluateValidatedTokens : IOpenIddictValidationHandler<ProcessAuthenticationContext>
     {
@@ -44,24 +45,19 @@ public static partial class OpenIddictValidationHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessAuthenticationContext context)
+        public ValueTask HandleAsync(ProcessAuthenticationContext context!!)
         {
-            if (context is null)
+            (context.ExtractAccessToken, context.RequireAccessToken, context.ValidateAccessToken) = context.EndpointType switch
             {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            (context.ValidateAccessToken, context.RequireAccessToken) = context.EndpointType switch
-            {
-                // The validation handler is responsible of validating access tokens for endpoints
+                // The validation handler is responsible for validating access tokens for endpoints
                 // it doesn't manage (typically, API endpoints using token authentication).
                 //
                 // As such, sending an access token is not mandatory: API endpoints that require
                 // authentication can set up an authorization policy to reject such requests later
                 // in the request processing pipeline (typically, via the authorization middleware).
-                OpenIddictValidationEndpointType.Unknown => (true, false),
+                OpenIddictValidationEndpointType.Unknown => (true, false, true),
 
-                _ => (false, false)
+                _ => (false, false, false)
             };
 
             // Note: unlike the equivalent event in the server stack, authentication can be triggered for
@@ -74,13 +70,45 @@ public static partial class OpenIddictValidationHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of ensuring a token was correctly resolved from the context.
+    /// Contains the logic responsible for rejecting authentication demands that lack required tokens.
+    /// </summary>
+    public class ValidateRequiredTokens : IOpenIddictValidationHandler<ProcessAuthenticationContext>
+    {
+        /// <summary>
+        /// Gets the default descriptor definition assigned to this handler.
+        /// </summary>
+        public static OpenIddictValidationHandlerDescriptor Descriptor { get; }
+            = OpenIddictValidationHandlerDescriptor.CreateBuilder<ProcessAuthenticationContext>()
+                .UseSingletonHandler<EvaluateValidatedTokens>()
+                .SetOrder(EvaluateValidatedTokens.Descriptor.Order + 1_000)
+                .SetType(OpenIddictValidationHandlerType.BuiltIn)
+                .Build();
+
+        /// <inheritdoc/>
+        public ValueTask HandleAsync(ProcessAuthenticationContext context!!)
+        {
+            if (context.RequireAccessToken && string.IsNullOrEmpty(context.AccessToken))
+            {
+                context.Reject(
+                    error: Errors.MissingToken,
+                    description: SR.GetResourceString(SR.ID2000),
+                    uri: SR.FormatID8000(SR.ID2000));
+
+                return default;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Contains the logic responsible for ensuring a token was correctly resolved from the context.
     /// </summary>
     public class ValidateAccessToken : IOpenIddictValidationHandler<ProcessAuthenticationContext>
     {
         private readonly IOpenIddictValidationDispatcher _dispatcher;
 
-        public ValidateAccessToken(IOpenIddictValidationDispatcher dispatcher)
+        public ValidateAccessToken(IOpenIddictValidationDispatcher dispatcher!!)
             => _dispatcher = dispatcher;
 
         /// <summary>
@@ -90,35 +118,15 @@ public static partial class OpenIddictValidationHandlers
             = OpenIddictValidationHandlerDescriptor.CreateBuilder<ProcessAuthenticationContext>()
                 .AddFilter<RequireAccessTokenValidated>()
                 .UseScopedHandler<ValidateAccessToken>()
-                .SetOrder(EvaluateValidatedTokens.Descriptor.Order + 1_000)
+                .SetOrder(ValidateRequiredTokens.Descriptor.Order + 1_000)
                 .SetType(OpenIddictValidationHandlerType.BuiltIn)
                 .Build();
 
         /// <inheritdoc/>
-        public async ValueTask HandleAsync(ProcessAuthenticationContext context)
+        public async ValueTask HandleAsync(ProcessAuthenticationContext context!!)
         {
-            if (context is null)
+            if (context.AccessTokenPrincipal is not null || string.IsNullOrEmpty(context.AccessToken))
             {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            if (context.AccessTokenPrincipal is not null)
-            {
-                return;
-            }
-
-            if (string.IsNullOrEmpty(context.AccessToken))
-            {
-                if (context.RequireAccessToken)
-                {
-                    context.Reject(
-                        error: Errors.MissingToken,
-                        description: SR.GetResourceString(SR.ID2000),
-                        uri: SR.FormatID8000(SR.ID2000));
-
-                    return;
-                }
-
                 return;
             }
 
@@ -156,7 +164,7 @@ public static partial class OpenIddictValidationHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of ensuring that the challenge response contains an appropriate error.
+    /// Contains the logic responsible for ensuring that the challenge response contains an appropriate error.
     /// </summary>
     public class AttachDefaultChallengeError : IOpenIddictValidationHandler<ProcessChallengeContext>
     {
@@ -171,13 +179,8 @@ public static partial class OpenIddictValidationHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessChallengeContext context)
+        public ValueTask HandleAsync(ProcessChallengeContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // If an error was explicitly set by the application, don't override it.
             if (!string.IsNullOrEmpty(context.Response.Error) ||
                 !string.IsNullOrEmpty(context.Response.ErrorDescription) ||
@@ -215,7 +218,7 @@ public static partial class OpenIddictValidationHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of attaching the appropriate parameters to the error response.
+    /// Contains the logic responsible for attaching the appropriate parameters to the error response.
     /// </summary>
     public class AttachErrorParameters : IOpenIddictValidationHandler<ProcessErrorContext>
     {
@@ -230,13 +233,8 @@ public static partial class OpenIddictValidationHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessErrorContext context)
+        public ValueTask HandleAsync(ProcessErrorContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             context.Response.Error = context.Error;
             context.Response.ErrorDescription = context.ErrorDescription;
             context.Response.ErrorUri = context.ErrorUri;
@@ -254,7 +252,7 @@ public static partial class OpenIddictValidationHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of extracting potential errors from the response.
+    /// Contains the logic responsible for extracting potential errors from the response.
     /// </summary>
     public class HandleErrorResponse<TContext> : IOpenIddictValidationHandler<TContext> where TContext : BaseValidatingContext
     {
@@ -269,13 +267,8 @@ public static partial class OpenIddictValidationHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             if (!string.IsNullOrEmpty(context.Transaction.Response?.Error))
             {
                 context.Reject(

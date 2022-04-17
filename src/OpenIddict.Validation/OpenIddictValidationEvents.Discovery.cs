@@ -4,7 +4,6 @@
  * the license and the contributors participating to this project.
  */
 
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.Validation;
@@ -83,7 +82,7 @@ public static partial class OpenIddictValidationEvents
         }
 
         /// <summary>
-        /// Gets or sets the response, or <c>null</c> if it wasn't extracted yet.
+        /// Gets or sets the response, or <see langword="null"/> if it wasn't extracted yet.
         /// </summary>
         public OpenIddictResponse? Response
         {
@@ -126,7 +125,7 @@ public static partial class OpenIddictValidationEvents
         /// <summary>
         /// Gets the OpenID Connect configuration.
         /// </summary>
-        public OpenIdConnectConfiguration Configuration { get; } = new OpenIdConnectConfiguration();
+        public OpenIddictConfiguration Configuration { get; } = new OpenIddictConfiguration();
     }
 
     /// <summary>
@@ -201,7 +200,7 @@ public static partial class OpenIddictValidationEvents
         }
 
         /// <summary>
-        /// Gets or sets the response, or <c>null</c> if it wasn't extracted yet.
+        /// Gets or sets the response, or <see langword="null"/> if it wasn't extracted yet.
         /// </summary>
         public OpenIddictResponse? Response
         {

@@ -22,6 +22,10 @@ using static OpenIddict.Server.AspNetCore.OpenIddictServerAspNetCoreHandlers;
 using static OpenIddict.Server.OpenIddictServerEvents;
 using static OpenIddict.Server.OpenIddictServerHandlers.Protection;
 
+#if SUPPORTS_JSON_NODES
+using System.Text.Json.Nodes;
+#endif
+
 namespace OpenIddict.Server.AspNetCore.IntegrationTests;
 
 public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServerIntegrationTests
@@ -167,10 +171,13 @@ public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServ
         Assert.Equal(JsonValueKind.Number, ((JsonElement) response["integer_parameter"]).ValueKind);
         Assert.Equal("Bob l'Eponge", (string?) response["string_parameter"]);
         Assert.Equal(JsonValueKind.String, ((JsonElement) response["string_parameter"]).ValueKind);
-        Assert.Equal(new[] { "Contoso", "Fabrikam" }, (string[]?) response["array_parameter"]);
-        Assert.Equal(JsonValueKind.Array, ((JsonElement) response["array_parameter"]).ValueKind);
-        Assert.Equal("value", (string?) response["object_parameter"]?["parameter"]);
-        Assert.Equal(JsonValueKind.Object, ((JsonElement) response["object_parameter"]).ValueKind);
+
+#if SUPPORTS_JSON_NODES
+        Assert.Equal(new[] { "Contoso", "Fabrikam" }, (string[]?) response["node_array_parameter"]);
+        Assert.IsType<JsonArray>((JsonNode?) response["node_array_parameter"]);
+        Assert.Equal("value", (string?) response["node_object_parameter"]?["parameter"]);
+        Assert.IsType<JsonObject>((JsonNode?) response["node_object_parameter"]);
+#endif
     }
 
     [Fact]
@@ -762,6 +769,13 @@ public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServ
         Assert.Equal(JsonValueKind.Array, ((JsonElement) response["array_parameter"]).ValueKind);
         Assert.Equal("value", (string?) response["object_parameter"]?["parameter"]);
         Assert.Equal(JsonValueKind.Object, ((JsonElement) response["object_parameter"]).ValueKind);
+
+#if SUPPORTS_JSON_NODES
+        Assert.Equal(new[] { "Contoso", "Fabrikam" }, (string[]?) response["node_array_parameter"]);
+        Assert.IsType<JsonArray>((JsonNode?) response["node_array_parameter"]);
+        Assert.Equal("value", (string?) response["node_object_parameter"]?["parameter"]);
+        Assert.IsType<JsonObject>((JsonNode?) response["node_object_parameter"]);
+#endif
     }
 
     [Fact]
@@ -798,7 +812,7 @@ public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServ
     }
 
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-        Justification = "The caller is responsible of disposing the test server.")]
+        Justification = "The caller is responsible for disposing the test server.")]
     protected override
 #if SUPPORTS_GENERIC_HOST
         async
@@ -845,7 +859,7 @@ public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServ
 #else
         var server = new TestServer(builder);
 
-        return new ValueTask<OpenIddictServerIntegrationTestServer>(new OpenIddictServerAspNetCoreIntegrationTestServer(server));
+        return new(new OpenIddictServerAspNetCoreIntegrationTestServer(server));
 #endif
 
         void ConfigurePipeline(IApplicationBuilder app)
@@ -893,7 +907,11 @@ public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServ
                             ["integer_parameter"] = 42,
                             ["string_parameter"] = "Bob l'Eponge",
                             ["array_parameter"] = JsonSerializer.Deserialize<JsonElement>(@"[""Contoso"",""Fabrikam""]"),
-                            ["object_parameter"] = JsonSerializer.Deserialize<JsonElement>(@"{""parameter"":""value""}")
+                            ["object_parameter"] = JsonSerializer.Deserialize<JsonElement>(@"{""parameter"":""value""}"),
+#if SUPPORTS_JSON_NODES
+                            ["node_array_parameter"] = new JsonArray("Contoso", "Fabrikam"),
+                            ["node_object_parameter"] = new JsonObject { ["parameter"] = "value" }
+#endif
                         });
 
                     await context.SignInAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, principal, properties);
@@ -942,7 +960,11 @@ public partial class OpenIddictServerAspNetCoreIntegrationTests : OpenIddictServ
                             ["integer_parameter"] = 42,
                             ["string_parameter"] = "Bob l'Eponge",
                             ["array_parameter"] = JsonSerializer.Deserialize<JsonElement>(@"[""Contoso"",""Fabrikam""]"),
-                            ["object_parameter"] = JsonSerializer.Deserialize<JsonElement>(@"{""parameter"":""value""}")
+                            ["object_parameter"] = JsonSerializer.Deserialize<JsonElement>(@"{""parameter"":""value""}"),
+#if SUPPORTS_JSON_NODES
+                            ["node_array_parameter"] = new JsonArray("Contoso", "Fabrikam"),
+                            ["node_object_parameter"] = new JsonObject { ["parameter"] = "value" }
+#endif
                         });
 
                     await context.ChallengeAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, properties);

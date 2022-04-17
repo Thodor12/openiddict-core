@@ -5,7 +5,6 @@
  */
 
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using OpenIddict.Server;
 
 namespace OpenIddict.Validation.ServerIntegration;
@@ -22,7 +21,7 @@ public class OpenIddictValidationServerIntegrationConfiguration : IConfigureOpti
     /// Creates a new instance of the <see cref="OpenIddictValidationServerIntegrationConfiguration"/> class.
     /// </summary>
     /// <param name="options">The OpenIddict server options.</param>
-    public OpenIddictValidationServerIntegrationConfiguration(IOptionsMonitor<OpenIddictServerOptions> options)
+    public OpenIddictValidationServerIntegrationConfiguration(IOptionsMonitor<OpenIddictServerOptions> options!!)
         => _options = options;
 
     /// <summary>
@@ -30,18 +29,13 @@ public class OpenIddictValidationServerIntegrationConfiguration : IConfigureOpti
     /// and ensures that the configuration is in a consistent and valid state.
     /// </summary>
     /// <param name="options">The options instance to initialize.</param>
-    public void Configure(OpenIddictValidationOptions options)
+    public void Configure(OpenIddictValidationOptions options!!)
     {
-        if (options is null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
-
         // Note: the issuer may be null. In this case, it will be usually provided by
         // a validation handler registered by the host (e.g ASP.NET Core or OWIN/Katana).
-        options.Configuration = new OpenIdConnectConfiguration
+        options.Configuration = new OpenIddictConfiguration
         {
-            Issuer = _options.CurrentValue.Issuer?.AbsoluteUri
+            Issuer = _options.CurrentValue.Issuer
         };
 
         // TODO
@@ -64,13 +58,8 @@ public class OpenIddictValidationServerIntegrationConfiguration : IConfigureOpti
     /// </summary>
     /// <param name="name">The name of the options instance to configure, if applicable.</param>
     /// <param name="options">The options instance to initialize.</param>
-    public void PostConfigure(string name, OpenIddictValidationOptions options)
+    public void PostConfigure(string name, OpenIddictValidationOptions options!!)
     {
-        if (options is null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
-
         if (options.ValidationType != OpenIddictValidationType.Direct)
         {
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0170));

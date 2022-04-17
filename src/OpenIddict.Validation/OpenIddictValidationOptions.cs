@@ -6,7 +6,6 @@
 
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.Validation;
@@ -25,11 +24,11 @@ public class OpenIddictValidationOptions
     };
 
     /// <summary>
-    /// Gets the list of the handlers responsible of processing the OpenIddict validation operations.
+    /// Gets the list of the handlers responsible for processing the OpenIddict validation operations.
     /// Note: the list is automatically sorted based on the order assigned to each handler descriptor.
     /// As such, it MUST NOT be mutated after options initialization to preserve the exact order.
     /// </summary>
-    public List<OpenIddictValidationHandlerDescriptor> Handlers { get; } = new(OpenIddictValidationHandlers.DefaultHandlers);
+    public List<OpenIddictValidationHandlerDescriptor> Handlers { get; } = new(DefaultHandlers);
 
     /// <summary>
     /// Gets or sets the type of validation used by the OpenIddict validation services.
@@ -77,13 +76,13 @@ public class OpenIddictValidationOptions
     /// <summary>
     /// Gets or sets the OAuth 2.0/OpenID Connect static server configuration, if applicable.
     /// </summary>
-    public OpenIdConnectConfiguration? Configuration { get; set; }
+    public OpenIddictConfiguration? Configuration { get; set; }
 
     /// <summary>
     /// Gets or sets the configuration manager used to retrieve
     /// and cache the OAuth 2.0/OpenID Connect server configuration.
     /// </summary>
-    public IConfigurationManager<OpenIdConnectConfiguration> ConfigurationManager { get; set; } = default!;
+    public IConfigurationManager<OpenIddictConfiguration> ConfigurationManager { get; set; } = default!;
 
     /// <summary>
     /// Gets the intended audiences of this resource server.

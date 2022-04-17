@@ -22,13 +22,8 @@ public static class OpenIddictCoreExtensions
     /// <param name="builder">The services builder used by OpenIddict to register new services.</param>
     /// <remarks>This extension can be safely called multiple times.</remarks>
     /// <returns>The <see cref="OpenIddictBuilder"/>.</returns>
-    public static OpenIddictCoreBuilder AddCore(this OpenIddictBuilder builder)
+    public static OpenIddictCoreBuilder AddCore(this OpenIddictBuilder builder!!)
     {
-        if (builder is null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
-
         builder.Services.AddLogging();
         builder.Services.AddMemoryCache();
         builder.Services.AddOptions();
@@ -48,52 +43,44 @@ public static class OpenIddictCoreExtensions
         builder.Services.TryAddScoped<IOpenIddictScopeStoreResolver, OpenIddictScopeStoreResolver>();
         builder.Services.TryAddScoped<IOpenIddictTokenStoreResolver, OpenIddictTokenStoreResolver>();
 
-        builder.Services.TryAddScoped(provider =>
+        builder.Services.TryAddScoped(static provider =>
         {
-            var options = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>().CurrentValue;
-            if (options.DefaultApplicationType is null)
-            {
+            var type = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>()
+                .CurrentValue?.DefaultApplicationType ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0273));
-            }
 
             return (IOpenIddictApplicationManager) provider.GetRequiredService(
-                typeof(OpenIddictApplicationManager<>).MakeGenericType(options.DefaultApplicationType));
+                typeof(OpenIddictApplicationManager<>).MakeGenericType(type));
         });
 
-        builder.Services.TryAddScoped(provider =>
+        builder.Services.TryAddScoped(static provider =>
         {
-            var options = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>().CurrentValue;
-            if (options.DefaultAuthorizationType is null)
-            {
+            var type = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>()
+                .CurrentValue?.DefaultAuthorizationType ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0274));
-            }
 
             return (IOpenIddictAuthorizationManager) provider.GetRequiredService(
-                typeof(OpenIddictAuthorizationManager<>).MakeGenericType(options.DefaultAuthorizationType));
+                typeof(OpenIddictAuthorizationManager<>).MakeGenericType(type));
         });
 
-        builder.Services.TryAddScoped(provider =>
+        builder.Services.TryAddScoped(static provider =>
         {
-            var options = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>().CurrentValue;
-            if (options.DefaultScopeType is null)
-            {
+            var type = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>()
+                .CurrentValue?.DefaultScopeType ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0275));
-            }
 
             return (IOpenIddictScopeManager) provider.GetRequiredService(
-                typeof(OpenIddictScopeManager<>).MakeGenericType(options.DefaultScopeType));
+                typeof(OpenIddictScopeManager<>).MakeGenericType(type));
         });
 
-        builder.Services.TryAddScoped(provider =>
+        builder.Services.TryAddScoped(static provider =>
         {
-            var options = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>().CurrentValue;
-            if (options.DefaultTokenType is null)
-            {
+            var type = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>()
+                .CurrentValue?.DefaultTokenType ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0276));
-            }
 
             return (IOpenIddictTokenManager) provider.GetRequiredService(
-                typeof(OpenIddictTokenManager<>).MakeGenericType(options.DefaultTokenType));
+                typeof(OpenIddictTokenManager<>).MakeGenericType(type));
         });
 
         return new OpenIddictCoreBuilder(builder.Services);
@@ -106,18 +93,8 @@ public static class OpenIddictCoreExtensions
     /// <param name="configuration">The configuration delegate used to configure the core services.</param>
     /// <remarks>This extension can be safely called multiple times.</remarks>
     /// <returns>The <see cref="OpenIddictBuilder"/>.</returns>
-    public static OpenIddictBuilder AddCore(this OpenIddictBuilder builder, Action<OpenIddictCoreBuilder> configuration)
+    public static OpenIddictBuilder AddCore(this OpenIddictBuilder builder!!, Action<OpenIddictCoreBuilder> configuration!!)
     {
-        if (builder is null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
-
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
         configuration(builder.AddCore());
 
         return builder;

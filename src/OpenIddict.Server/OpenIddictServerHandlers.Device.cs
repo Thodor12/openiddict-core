@@ -59,13 +59,13 @@ public static partial class OpenIddictServerHandlers
             AttachUserCodePrincipal.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of extracting device requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for extracting device requests and invoking the corresponding event handlers.
         /// </summary>
         public class ExtractDeviceRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ExtractDeviceRequest(IOpenIddictServerDispatcher dispatcher)
+            public ExtractDeviceRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -80,13 +80,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ExtractDeviceRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -121,13 +116,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating device requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for validating device requests and invoking the corresponding event handlers.
         /// </summary>
         public class ValidateDeviceRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ValidateDeviceRequest(IOpenIddictServerDispatcher dispatcher)
+            public ValidateDeviceRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -142,13 +137,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ValidateDeviceRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -178,13 +168,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of handling device requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for handling device requests and invoking the corresponding event handlers.
         /// </summary>
         public class HandleDeviceRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public HandleDeviceRequest(IOpenIddictServerDispatcher dispatcher)
+            public HandleDeviceRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -199,13 +189,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new HandleDeviceRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -279,13 +264,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of processing sign-in responses and invoking the corresponding event handlers.
+        /// Contains the logic responsible for processing sign-in responses and invoking the corresponding event handlers.
         /// </summary>
         public class ApplyDeviceResponse<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ApplyDeviceResponse(IOpenIddictServerDispatcher dispatcher)
+            public ApplyDeviceResponse(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -300,13 +285,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(TContext context)
+            public async ValueTask HandleAsync(TContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ApplyDeviceResponseContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -327,7 +307,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests that don't specify a client identifier.
+        /// Contains the logic responsible for rejecting device requests that don't specify a client identifier.
         /// </summary>
         public class ValidateClientIdParameter : IOpenIddictServerHandler<ValidateDeviceRequestContext>
         {
@@ -342,13 +322,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // client_id is a required parameter and MUST cause an error when missing.
                 // See https://tools.ietf.org/html/rfc8628#section-3.1 for more information.
                 if (string.IsNullOrEmpty(context.ClientId))
@@ -368,7 +343,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests that don't specify a valid scope parameter.
+        /// Contains the logic responsible for rejecting device requests that don't specify a valid scope parameter.
         /// </summary>
         public class ValidateScopeParameter : IOpenIddictServerHandler<ValidateDeviceRequestContext>
         {
@@ -383,13 +358,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // Reject device requests that specify scope=offline_access if the refresh token flow is not enabled.
                 if (context.Request.HasScope(Scopes.OfflineAccess) && !context.Options.GrantTypes.Contains(GrantTypes.RefreshToken))
                 {
@@ -406,7 +376,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting authorization requests that use unregistered scopes.
+        /// Contains the logic responsible for rejecting authorization requests that use unregistered scopes.
         /// Note: this handler partially works with the degraded mode but is not used when scope validation is disabled.
         /// </summary>
         public class ValidateScopes : IOpenIddictServerHandler<ValidateDeviceRequestContext>
@@ -438,13 +408,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // If all the specified scopes are registered in the options, avoid making a database lookup.
                 var scopes = new HashSet<string>(context.Request.GetScopes(), StringComparer.Ordinal);
                 scopes.ExceptWith(context.Options.Scopes);
@@ -485,7 +450,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests that use an invalid client_id.
+        /// Contains the logic responsible for rejecting device requests that use an invalid client_id.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateClientId : IOpenIddictServerHandler<ValidateDeviceRequestContext>
@@ -494,7 +459,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientId() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientId(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientId(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -510,13 +475,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
                 // Retrieve the application details corresponding to the requested client_id.
@@ -537,7 +497,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests made by applications
+        /// Contains the logic responsible for rejecting device requests made by applications
         /// whose client type is not compatible with the requested grant type.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -547,7 +507,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientType() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientType(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientType(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -563,20 +523,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
                 {
@@ -612,7 +564,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests specifying an invalid client secret.
+        /// Contains the logic responsible for rejecting device requests specifying an invalid client secret.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateClientSecret : IOpenIddictServerHandler<ValidateDeviceRequestContext>
@@ -621,7 +573,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientSecret() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientSecret(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientSecret(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -637,20 +589,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // If the application is a public client, don't validate the client secret.
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
@@ -675,7 +619,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests made by
+        /// Contains the logic responsible for rejecting device requests made by
         /// applications that haven't been granted the device endpoint permission.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -685,7 +629,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateEndpointPermissions() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateEndpointPermissions(IOpenIddictApplicationManager applicationManager)
+            public ValidateEndpointPermissions(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -702,20 +646,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // Reject the request if the application is not allowed to use the device endpoint.
                 if (!await _applicationManager.HasPermissionAsync(application, Permissions.Endpoints.Device))
@@ -733,7 +669,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests made by unauthorized applications.
+        /// Contains the logic responsible for rejecting device requests made by unauthorized applications.
         /// Note: this handler is not used when the degraded mode is enabled or when grant type permissions are disabled.
         /// </summary>
         public class ValidateGrantTypePermissions : IOpenIddictServerHandler<ValidateDeviceRequestContext>
@@ -742,7 +678,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateGrantTypePermissions() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateGrantTypePermissions(IOpenIddictApplicationManager applicationManager)
+            public ValidateGrantTypePermissions(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -758,20 +694,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // Reject the request if the application is not allowed to use the device code grant.
                 if (!await _applicationManager.HasPermissionAsync(application, Permissions.GrantTypes.DeviceCode))
@@ -804,7 +732,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting device requests made by applications
+        /// Contains the logic responsible for rejecting device requests made by applications
         /// that haven't been granted the appropriate grant type permission.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -814,7 +742,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateScopePermissions() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateScopePermissions(IOpenIddictApplicationManager applicationManager)
+            public ValidateScopePermissions(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -831,20 +759,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateDeviceRequestContext context)
+            public async ValueTask HandleAsync(ValidateDeviceRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 foreach (var scope in context.Request.GetScopes())
                 {
@@ -872,13 +792,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of extracting verification requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for extracting verification requests and invoking the corresponding event handlers.
         /// </summary>
         public class ExtractVerificationRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ExtractVerificationRequest(IOpenIddictServerDispatcher dispatcher)
+            public ExtractVerificationRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -893,13 +813,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ExtractVerificationRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -934,13 +849,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating verification requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for validating verification requests and invoking the corresponding event handlers.
         /// </summary>
         public class ValidateVerificationRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ValidateVerificationRequest(IOpenIddictServerDispatcher dispatcher)
+            public ValidateVerificationRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -955,13 +870,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ValidateVerificationRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -991,13 +901,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of handling verification requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for handling verification requests and invoking the corresponding event handlers.
         /// </summary>
         public class HandleVerificationRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public HandleVerificationRequest(IOpenIddictServerDispatcher dispatcher)
+            public HandleVerificationRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -1012,13 +922,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new HandleVerificationRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -1088,13 +993,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of processing sign-in responses and invoking the corresponding event handlers.
+        /// Contains the logic responsible for processing sign-in responses and invoking the corresponding event handlers.
         /// </summary>
         public class ApplyVerificationResponse<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ApplyVerificationResponse(IOpenIddictServerDispatcher dispatcher)
+            public ApplyVerificationResponse(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -1109,13 +1014,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(TContext context)
+            public async ValueTask HandleAsync(TContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ApplyVerificationResponseContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -1136,13 +1036,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of attaching the claims principal resolved from the user code.
+        /// Contains the logic responsible for attaching the claims principal resolved from the user code.
         /// </summary>
         public class AttachUserCodePrincipal : IOpenIddictServerHandler<HandleVerificationRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public AttachUserCodePrincipal(IOpenIddictServerDispatcher dispatcher)
+            public AttachUserCodePrincipal(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -1156,13 +1056,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(HandleVerificationRequestContext context)
+            public async ValueTask HandleAsync(HandleVerificationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // Note: the user_code may not be present (e.g when the user typed
                 // the verification_uri manually without the user code appended).
                 // In this case, ignore the missing token so that a view can be

@@ -27,13 +27,13 @@ public static partial class OpenIddictValidationDataProtectionHandlers
             ValidateDataProtectionToken.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of validating tokens generated using Data Protection.
+        /// Contains the logic responsible for validating tokens generated using Data Protection.
         /// </summary>
         public class ValidateDataProtectionToken : IOpenIddictValidationHandler<ValidateTokenContext>
         {
             private readonly IOptionsMonitor<OpenIddictValidationDataProtectionOptions> _options;
 
-            public ValidateDataProtectionToken(IOptionsMonitor<OpenIddictValidationDataProtectionOptions> options)
+            public ValidateDataProtectionToken(IOptionsMonitor<OpenIddictValidationDataProtectionOptions> options!!)
                 => _options = options;
 
             /// <summary>

@@ -33,18 +33,10 @@ public class OpenIddictValidationOwinMiddlewareFactory : OwinMiddleware
     /// <returns>
     /// A <see cref="ValueTask"/> that can be used to monitor the asynchronous operation.
     /// </returns>
-    public override Task Invoke(IOwinContext context)
+    public override Task Invoke(IOwinContext context!!)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
-
-        var provider = context.Get<IServiceProvider>(typeof(IServiceProvider).FullName);
-        if (provider is null)
-        {
+        var provider = context.Get<IServiceProvider>(typeof(IServiceProvider).FullName) ??
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0168));
-        }
 
         // Note: the Microsoft.Extensions.DependencyInjection container doesn't support resolving services
         // with arbitrary parameters, which prevents the validation OWIN middleware from being resolved directly

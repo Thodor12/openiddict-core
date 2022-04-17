@@ -21,8 +21,8 @@ public static partial class OpenIddictValidationEvents
         /// <summary>
         /// Creates a new instance of the <see cref="BaseContext"/> class.
         /// </summary>
-        protected BaseContext(OpenIddictValidationTransaction transaction)
-            => Transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
+        protected BaseContext(OpenIddictValidationTransaction transaction!!)
+            => Transaction = transaction;
 
         /// <summary>
         /// Gets the environment associated with the current request being processed.
@@ -48,7 +48,7 @@ public static partial class OpenIddictValidationEvents
         }
 
         /// <summary>
-        /// Gets the logger responsible of logging processed operations.
+        /// Gets the logger responsible for logging processed operations.
         /// </summary>
         public ILogger Logger => Transaction.Logger;
 
@@ -195,7 +195,7 @@ public static partial class OpenIddictValidationEvents
         }
 
         /// <summary>
-        /// Gets or sets the request, or <c>null</c> if it couldn't be extracted.
+        /// Gets or sets the request, or <see langword="null"/> if it couldn't be extracted.
         /// </summary>
         public OpenIddictRequest? Request
         {
@@ -266,16 +266,24 @@ public static partial class OpenIddictValidationEvents
         public string? AccessToken { get; set; }
 
         /// <summary>
+        /// Gets or sets a boolean indicating whether an access
+        /// token should be extracted from the current context.
+        /// Note: overriding the value of this property is generally not
+        /// recommended, except when dealing with non-standard clients.
+        /// </summary>
+        public bool ExtractAccessToken { get; set; }
+
+        /// <summary>
         /// Gets or sets a boolean indicating whether an access token
-        /// must be resolved for the authentication to considered valid.
+        /// must be resolved for the authentication to be considered valid.
         /// Note: overriding the value of this property is generally not
         /// recommended, except when dealing with non-standard clients.
         /// </summary>
         public bool RequireAccessToken { get; set; }
 
         /// <summary>
-        /// Gets or sets a boolean indicating whether an access token
-        /// should be extracted from the current context and validated.
+        /// Gets or sets a boolean indicating whether the access
+        /// token extracted from the current context should be validated.
         /// Note: overriding the value of this property is generally not
         /// recommended, except when dealing with non-standard clients.
         /// </summary>

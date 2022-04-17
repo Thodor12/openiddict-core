@@ -22,9 +22,9 @@ public class OpenIddictEntityFrameworkAuthorizationStoreResolver : IOpenIddictAu
     private readonly IServiceProvider _provider;
 
     public OpenIddictEntityFrameworkAuthorizationStoreResolver(
-        TypeResolutionCache cache,
-        IOptionsMonitor<OpenIddictEntityFrameworkOptions> options,
-        IServiceProvider provider)
+        TypeResolutionCache cache!!,
+        IOptionsMonitor<OpenIddictEntityFrameworkOptions> options!!,
+        IServiceProvider provider!!)
     {
         _cache = cache;
         _options = options;
@@ -47,17 +47,11 @@ public class OpenIddictEntityFrameworkAuthorizationStoreResolver : IOpenIddictAu
 
         var type = _cache.GetOrAdd(typeof(TAuthorization), key =>
         {
-            var root = OpenIddictHelpers.FindGenericBaseType(key, typeof(OpenIddictEntityFrameworkAuthorization<,,>));
-            if (root is null)
-            {
+            var root = OpenIddictHelpers.FindGenericBaseType(key, typeof(OpenIddictEntityFrameworkAuthorization<,,>)) ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0236));
-            }
 
-            var context = _options.CurrentValue.DbContextType;
-            if (context is null)
-            {
+            var context = _options.CurrentValue.DbContextType ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0235));
-            }
 
             return typeof(OpenIddictEntityFrameworkAuthorizationStore<,,,,>).MakeGenericType(
                 /* TAuthorization: */ key,

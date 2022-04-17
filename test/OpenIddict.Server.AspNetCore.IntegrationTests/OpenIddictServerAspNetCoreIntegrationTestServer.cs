@@ -6,8 +6,11 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Hosting;
 using OpenIddict.Server.IntegrationTests;
+
+#if SUPPORTS_GENERIC_HOST
+using Microsoft.Extensions.Hosting;
+#endif
 
 namespace OpenIddict.Server.AspNetCore.IntegrationTests;
 
@@ -38,10 +41,9 @@ public class OpenIddictServerAspNetCoreIntegrationTestServer : OpenIddictServerI
     public TestServer Server { get; }
 
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
-        Justification = "The caller is responsible of disposing the test client.")]
+        Justification = "The caller is responsible for disposing the test client.")]
     public override ValueTask<OpenIddictServerIntegrationTestClient> CreateClientAsync()
-        => new ValueTask<OpenIddictServerIntegrationTestClient>(
-            new OpenIddictServerIntegrationTestClient(Server.CreateClient()));
+        => new(new OpenIddictServerIntegrationTestClient(Server.CreateClient()));
 
     public override
 #if SUPPORTS_GENERIC_HOST

@@ -19,22 +19,17 @@ public class OpenIddictServerDispatcher : IOpenIddictServerDispatcher
     /// Creates a new instance of the <see cref="OpenIddictServerDispatcher"/> class.
     /// </summary>
     public OpenIddictServerDispatcher(
-        ILogger<OpenIddictServerDispatcher> logger,
-        IOptionsMonitor<OpenIddictServerOptions> options,
-        IServiceProvider provider)
+        ILogger<OpenIddictServerDispatcher> logger!!,
+        IOptionsMonitor<OpenIddictServerOptions> options!!,
+        IServiceProvider provider!!)
     {
         _logger = logger;
         _options = options;
         _provider = provider;
     }
 
-    public async ValueTask DispatchAsync<TContext>(TContext context) where TContext : BaseContext
+    public async ValueTask DispatchAsync<TContext>(TContext context!!) where TContext : BaseContext
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
-
         await foreach (var handler in GetHandlersAsync())
         {
             try
@@ -98,16 +93,15 @@ public class OpenIddictServerDispatcher : IOpenIddictServerDispatcher
                     continue;
                 }
 
-                var handler = descriptor.ServiceDescriptor.ImplementationInstance is not null ?
-                    descriptor.ServiceDescriptor.ImplementationInstance as IOpenIddictServerHandler<TContext> :
-                    _provider.GetService(descriptor.ServiceDescriptor.ServiceType) as IOpenIddictServerHandler<TContext>;
-
-                if (handler is null)
+                yield return descriptor.ServiceDescriptor switch
                 {
-                    throw new InvalidOperationException(SR.FormatID0098(descriptor.ServiceDescriptor.ServiceType));
-                }
+                    { ImplementationInstance: IOpenIddictServerHandler<TContext> handler } => handler,
 
-                yield return handler;
+                    _ when _provider.GetService(descriptor.ServiceDescriptor.ServiceType)
+                        is IOpenIddictServerHandler<TContext> handler => handler,
+
+                    _ => throw new InvalidOperationException(SR.FormatID0098(descriptor.ServiceDescriptor.ServiceType))
+                };
             }
         }
 

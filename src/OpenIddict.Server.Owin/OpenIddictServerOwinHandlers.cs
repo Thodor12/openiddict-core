@@ -43,7 +43,7 @@ public static partial class OpenIddictServerOwinHandlers
         .AddRange(Userinfo.DefaultHandlers);
 
     /// <summary>
-    /// Contains the logic responsible of inferring the endpoint type from the request address.
+    /// Contains the logic responsible for inferring the endpoint type from the request address.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class InferEndpointType : IOpenIddictServerHandler<ProcessRequestContext>
@@ -62,20 +62,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessRequestContext context)
+        public ValueTask HandleAsync(ProcessRequestContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             context.EndpointType =
                 Matches(request, context.Options.AuthorizationEndpointUris) ? OpenIddictServerEndpointType.Authorization :
@@ -151,7 +143,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of infering the issuer URL from the HTTP request host and validating it.
+    /// Contains the logic responsible for infering the issuer URL from the HTTP request host and validating it.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class InferIssuerFromHost : IOpenIddictServerHandler<ProcessRequestContext>
@@ -168,24 +160,16 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessRequestContext context)
+        public ValueTask HandleAsync(ProcessRequestContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // Don't require that the request host be present if the request is not handled
             // by an OpenIddict endpoint or if an explicit issuer URL was already set.
-            if (context.Issuer is not null || context.EndpointType == OpenIddictServerEndpointType.Unknown)
+            if (context.Issuer is not null || context.EndpointType is OpenIddictServerEndpointType.Unknown)
             {
                 return default;
             }
@@ -218,7 +202,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of rejecting OpenID Connect requests that don't use transport security.
+    /// Contains the logic responsible for rejecting OpenID Connect requests that don't use transport security.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ValidateTransportSecurityRequirement : IOpenIddictServerHandler<ProcessRequestContext>
@@ -231,28 +215,20 @@ public static partial class OpenIddictServerOwinHandlers
                 .AddFilter<RequireOwinRequest>()
                 .AddFilter<RequireTransportSecurityRequirementEnabled>()
                 .UseSingletonHandler<ValidateTransportSecurityRequirement>()
-                .SetOrder(InferEndpointType.Descriptor.Order + 1_000)
+                .SetOrder(InferIssuerFromHost.Descriptor.Order + 1_000)
                 .SetType(OpenIddictServerHandlerType.BuiltIn)
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessRequestContext context)
+        public ValueTask HandleAsync(ProcessRequestContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // Don't require that the host be present if the request is not handled by OpenIddict.
-            if (context.EndpointType == OpenIddictServerEndpointType.Unknown)
+            if (context.EndpointType is OpenIddictServerEndpointType.Unknown)
             {
                 return default;
             }
@@ -273,7 +249,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of resolving the additional sign-in parameters stored in the OWIN
+    /// Contains the logic responsible for resolving the additional sign-in parameters stored in the OWIN
     /// authentication properties specified by the application that triggered the sign-in operation.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
@@ -291,13 +267,8 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ProcessChallengeContext context)
+        public ValueTask HandleAsync(ProcessChallengeContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             var properties = context.Transaction.GetProperty<AuthenticationProperties>(typeof(AuthenticationProperties).FullName!);
             if (properties is null)
             {
@@ -333,7 +304,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of extracting OpenID Connect requests from GET HTTP requests.
+    /// Contains the logic responsible for extracting OpenID Connect requests from GET HTTP requests.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ExtractGetRequest<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseValidatingContext
@@ -350,20 +321,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             if (string.Equals(request.Method, "GET", StringComparison.OrdinalIgnoreCase))
             {
@@ -387,7 +350,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of extracting OpenID Connect requests from GET or POST HTTP requests.
+    /// Contains the logic responsible for extracting OpenID Connect requests from GET or POST HTTP requests.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ExtractGetOrPostRequest<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseValidatingContext
@@ -404,20 +367,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public async ValueTask HandleAsync(TContext context)
+        public async ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             if (string.Equals(request.Method, "GET", StringComparison.OrdinalIgnoreCase))
             {
@@ -470,7 +425,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of extracting OpenID Connect requests from POST HTTP requests.
+    /// Contains the logic responsible for extracting OpenID Connect requests from POST HTTP requests.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ExtractPostRequest<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseValidatingContext
@@ -487,20 +442,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public async ValueTask HandleAsync(TContext context)
+        public async ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             if (string.Equals(request.Method, "POST", StringComparison.OrdinalIgnoreCase))
             {
@@ -548,7 +495,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of extracting client credentials from the standard HTTP Authorization header.
+    /// Contains the logic responsible for extracting client credentials from the standard HTTP Authorization header.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ExtractBasicAuthenticationCredentials<TContext> : IOpenIddictServerHandler<TContext>
@@ -566,22 +513,14 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Request is not null, SR.GetResourceString(SR.ID4008));
 
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             var header = request.Headers[Headers.Authorization];
             if (string.IsNullOrEmpty(header) || !header.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase))
@@ -650,7 +589,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of extracting an access token from the standard HTTP Authorization header.
+    /// Contains the logic responsible for extracting an access token from the standard HTTP Authorization header.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ExtractAccessToken<TContext> : IOpenIddictServerHandler<TContext>
@@ -668,22 +607,14 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Request is not null, SR.GetResourceString(SR.ID4008));
 
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var request = context.Transaction.GetOwinRequest();
-            if (request is null)
-            {
+            var request = context.Transaction.GetOwinRequest() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             var header = request.Headers[Headers.Authorization];
             if (string.IsNullOrEmpty(header) || !header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
@@ -699,7 +630,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of enabling the pass-through mode for the received request.
+    /// Contains the logic responsible for enabling the pass-through mode for the received request.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class EnablePassthroughMode<TContext, TFilter> : IOpenIddictServerHandler<TContext>
@@ -719,13 +650,8 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             context.SkipRequest();
 
             return default;
@@ -733,7 +659,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of attaching an appropriate HTTP status code.
+    /// Contains the logic responsible for attaching an appropriate HTTP status code.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class AttachHttpResponseCode<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
@@ -750,22 +676,14 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Response is not null, SR.GetResourceString(SR.ID4007));
 
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // When client authentication is made using basic authentication, the authorization server MUST return
             // a 401 response with a valid WWW-Authenticate header containing the Basic scheme and a non-empty realm.
@@ -790,7 +708,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of attaching the appropriate HTTP response cache headers.
+    /// Contains the logic responsible for attaching the appropriate HTTP response cache headers.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class AttachCacheControlHeader<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
@@ -807,20 +725,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // Prevent the response from being cached.
             response.Headers[Headers.CacheControl] = "no-store";
@@ -832,14 +742,14 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of attaching errors details to the WWW-Authenticate header.
+    /// Contains the logic responsible for attaching errors details to the WWW-Authenticate header.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class AttachWwwAuthenticateHeader<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
     {
         private readonly IOptionsMonitor<OpenIddictServerOwinOptions> _options;
 
-        public AttachWwwAuthenticateHeader(IOptionsMonitor<OpenIddictServerOwinOptions> options)
+        public AttachWwwAuthenticateHeader(IOptionsMonitor<OpenIddictServerOwinOptions> options!!)
             => _options = options;
 
         /// <summary>
@@ -854,22 +764,14 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Response is not null, SR.GetResourceString(SR.ID4007));
 
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // When client authentication is made using basic authentication, the authorization server MUST return
             // a 401 response with a valid WWW-Authenticate header containing the HTTP Basic authentication scheme.
@@ -951,7 +853,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing challenge responses that contain a WWW-Authenticate header.
+    /// Contains the logic responsible for processing challenge responses that contain a WWW-Authenticate header.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ProcessChallengeErrorResponse<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
@@ -968,20 +870,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // If the response doesn't contain a WWW-Authenticate header, don't return an empty response.
             if (!response.Headers.ContainsKey(Headers.WwwAuthenticate))
@@ -997,7 +891,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing OpenID Connect responses that must be returned as JSON.
+    /// Contains the logic responsible for processing OpenID Connect responses that must be returned as JSON.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ProcessJsonResponse<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
@@ -1014,22 +908,14 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public async ValueTask HandleAsync(TContext context)
+        public async ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Response is not null, SR.GetResourceString(SR.ID4007));
 
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             context.Logger.LogInformation(SR.GetResourceString(SR.ID6142), context.Transaction.Response);
 
@@ -1054,7 +940,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing OpenID Connect responses that must be handled by another
+    /// Contains the logic responsible for processing OpenID Connect responses that must be handled by another
     /// middleware in the pipeline at a later stage (e.g an ASP.NET MVC action or a NancyFX module).
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
@@ -1076,22 +962,9 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Response is not null, SR.GetResourceString(SR.ID4007));
-
-            // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
-            // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
-                throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             if (string.IsNullOrEmpty(context.Transaction.Response.Error))
             {
@@ -1108,7 +981,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing OpenID Connect responses that must be returned as plain-text.
+    /// Contains the logic responsible for processing OpenID Connect responses that must be returned as plain-text.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ProcessLocalErrorResponse<TContext> : IOpenIddictServerHandler<TContext>
@@ -1126,22 +999,14 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public async ValueTask HandleAsync(TContext context)
+        public async ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             Debug.Assert(context.Transaction.Response is not null, SR.GetResourceString(SR.ID4007));
 
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             if (string.IsNullOrEmpty(context.Transaction.Response.Error))
             {
@@ -1185,7 +1050,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing OpenID Connect responses that don't specify any parameter.
+    /// Contains the logic responsible for processing OpenID Connect responses that don't specify any parameter.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ProcessEmptyResponse<TContext> : IOpenIddictServerHandler<TContext>
@@ -1203,13 +1068,8 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(TContext context)
+        public ValueTask HandleAsync(TContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             context.Logger.LogInformation(SR.GetResourceString(SR.ID6145));
             context.HandleRequest();
 

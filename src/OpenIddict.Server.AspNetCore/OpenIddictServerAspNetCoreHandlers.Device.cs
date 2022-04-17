@@ -52,7 +52,7 @@ public static partial class OpenIddictServerAspNetCoreHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing verification responses that should trigger a host redirection.
+    /// Contains the logic responsible for processing verification responses that should trigger a host redirection.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by ASP.NET Core.
     /// </summary>
     public class ProcessHostRedirectionResponse : IOpenIddictServerHandler<ApplyVerificationResponseContext>
@@ -69,20 +69,12 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ApplyVerificationResponseContext context)
+        public ValueTask HandleAsync(ApplyVerificationResponseContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to ASP.NET Core requests. If the HTTP context cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetHttpRequest()?.HttpContext.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetHttpRequest()?.HttpContext.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0114));
-            }
 
             // Note: this handler only redirects the user agent to the address specified in
             // the properties when there's no error or if the error is an access_denied error.

@@ -14,18 +14,10 @@ public static class OpenIddictValidationSystemNetHttpHandlerFilters
     /// <summary>
     /// Represents a filter that excludes the associated handlers if the metadata address of the issuer is not available.
     /// </summary>
-    public class RequireHttpMetadataAddress : IOpenIddictValidationHandlerFilter<BaseContext>
+    public class RequireHttpMetadataAddress : IOpenIddictValidationHandlerFilter<BaseExternalContext>
     {
-        public ValueTask<bool> IsActiveAsync(BaseContext context)
-        {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            return new ValueTask<bool>(
-                string.Equals(context.Options.MetadataAddress?.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(context.Options.MetadataAddress?.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
-        }
+        public ValueTask<bool> IsActiveAsync(BaseExternalContext context!!)
+            => new(string.Equals(context.Address?.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(context.Address?.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
     }
 }

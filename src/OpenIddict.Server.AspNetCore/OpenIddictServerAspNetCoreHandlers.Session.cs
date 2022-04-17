@@ -53,7 +53,7 @@ public static partial class OpenIddictServerAspNetCoreHandlers
             ProcessEmptyResponse<ApplyLogoutResponseContext>.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of restoring cached requests from the request_id, if specified.
+        /// Contains the logic responsible for restoring cached requests from the request_id, if specified.
         /// Note: this handler is not used when the OpenID Connect request is not initially handled by ASP.NET Core.
         /// </summary>
         public class RestoreCachedRequestParameters : IOpenIddictServerHandler<ExtractLogoutRequestContext>
@@ -64,9 +64,9 @@ public static partial class OpenIddictServerAspNetCoreHandlers
 
             public RestoreCachedRequestParameters() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0116));
 
-            public RestoreCachedRequestParameters(IDistributedCache cache,
-                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
-                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+            public RestoreCachedRequestParameters(IDistributedCache cache!!,
+                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver!!,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver!!)
             {
                 _cache = cache;
                 _encryptionCredentialsResolver = encryptionCredentialsResolver;
@@ -86,13 +86,8 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ExtractLogoutRequestContext context)
+            public async ValueTask HandleAsync(ExtractLogoutRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Request is not null, SR.GetResourceString(SR.ID4008));
 
                 // If a request_id parameter can be found in the logout request,
@@ -129,7 +124,7 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     .EnsureValidSigningCredentials()
                     .Select(s => s.Key);
 
-                var result = context.Options.JsonWebTokenHandler.ValidateToken(token, parameters);
+                var result = await context.Options.JsonWebTokenHandler.ValidateTokenAsync(token, parameters);
                 if (!result.IsValid)
                 {
                     context.Logger.LogInformation(SR.GetResourceString(SR.ID6150), Parameters.RequestId);
@@ -144,27 +139,24 @@ public static partial class OpenIddictServerAspNetCoreHandlers
 
                 using var document = JsonDocument.Parse(
                     Base64UrlEncoder.Decode(((JsonWebToken) result.SecurityToken).InnerToken.EncodedPayload));
-                if (document.RootElement.ValueKind != JsonValueKind.Object)
+                if (document.RootElement.ValueKind is not JsonValueKind.Object)
                 {
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0118));
                 }
 
-                // Restore the authorization request parameters from the serialized payload.
+                // Restore the request parameters from the serialized payload.
                 foreach (var parameter in document.RootElement.EnumerateObject())
                 {
-                    // Avoid overriding the current request parameters.
-                    if (context.Request.HasParameter(parameter.Name))
+                    if (!context.Request.HasParameter(parameter.Name))
                     {
-                        continue;
+                        context.Request.AddParameter(parameter.Name, parameter.Value.Clone());
                     }
-
-                    context.Request.SetParameter(parameter.Name, parameter.Value.Clone());
                 }
             }
         }
 
         /// <summary>
-        /// Contains the logic responsible of caching logout requests, if applicable.
+        /// Contains the logic responsible for caching logout requests, if applicable.
         /// Note: this handler is not used when the OpenID Connect request is not initially handled by ASP.NET Core.
         /// </summary>
         public class CacheRequestParameters : IOpenIddictServerHandler<ExtractLogoutRequestContext>
@@ -178,9 +170,9 @@ public static partial class OpenIddictServerAspNetCoreHandlers
 
             public CacheRequestParameters(
                 IDistributedCache cache,
-                IOptionsMonitor<OpenIddictServerAspNetCoreOptions> options,
-                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver,
-                IOpenIddictSigningCredentialsResolver signingCredentialsResolver)
+                IOptionsMonitor<OpenIddictServerAspNetCoreOptions> options!!,
+                IOpenIddictEncryptionCredentialsResolver encryptionCredentialsResolver!!,
+                IOpenIddictSigningCredentialsResolver signingCredentialsResolver!!)
             {
                 _cache = cache;
                 _options = options;
@@ -201,22 +193,14 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ExtractLogoutRequestContext context)
+            public async ValueTask HandleAsync(ExtractLogoutRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Request is not null, SR.GetResourceString(SR.ID4008));
 
                 // This handler only applies to ASP.NET Core requests. If the HTTP context cannot be resolved,
                 // this may indicate that the request was incorrectly processed by another server stack.
-                var request = context.Transaction.GetHttpRequest();
-                if (request is null)
-                {
+                var request = context.Transaction.GetHttpRequest() ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0114));
-                }
 
                 // Don't cache the request if the request doesn't include any parameter.
                 // If a request_id parameter can be found in the logout request,
@@ -238,17 +222,34 @@ public static partial class OpenIddictServerAspNetCoreHandlers
 
                 context.Request.RequestId = Base64UrlEncoder.Encode(data);
 
+                // Build a list of claims matching the parameters extracted from the request.
+                //
+                // Note: in most cases, parameters should be representated as strings as requests are
+                // typically resolved from the query string or the request form, where parameters
+                // are natively represented as strings. However, requests can also be extracted from
+                // different places where they can be represented as complex JSON representations
+                // (e.g requests extracted from a JSON Web Token that may be encrypted and/or signed).
+                var claims = from parameter in context.Request.GetParameters()
+                             let element = (JsonElement) parameter.Value
+                             let type = element.ValueKind switch
+                             {
+                                 JsonValueKind.String                          => ClaimValueTypes.String,
+                                 JsonValueKind.Number                          => ClaimValueTypes.Integer64,
+                                 JsonValueKind.True or JsonValueKind.False     => ClaimValueTypes.Boolean,
+                                 JsonValueKind.Null or JsonValueKind.Undefined => JsonClaimValueTypes.JsonNull,
+                                 JsonValueKind.Array                           => JsonClaimValueTypes.JsonArray,
+                                 JsonValueKind.Object or _                     => JsonClaimValueTypes.Json
+                             }
+                             select new Claim(parameter.Key, element.ToString()!, type);
+
                 // Store the serialized logout request parameters in the distributed cache.
                 var token = context.Options.JsonWebTokenHandler.CreateToken(new SecurityTokenDescriptor
                 {
                     Audience = context.Issuer?.AbsoluteUri,
-                    Claims = context.Request.GetParameters().ToDictionary(
-                        parameter => parameter.Key,
-                        parameter => parameter.Value.Value),
                     EncryptingCredentials = (await _encryptionCredentialsResolver.GetCurrentEncryptionCredentialAsync()).EnsureValidEncryptingCredentials(),
                     Issuer = context.Issuer?.AbsoluteUri,
                     SigningCredentials = (await _signingCredentialsResolver.GetCurrentSigningCredentialAsync()).EnsureValidSigningCredentials(),
-                    Subject = new ClaimsIdentity(),
+                    Subject = new ClaimsIdentity(claims, TokenValidationParameters.DefaultAuthenticationType),
                     TokenType = JsonWebTokenTypes.Private.LogoutRequest
                 });
 
@@ -271,7 +272,7 @@ public static partial class OpenIddictServerAspNetCoreHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of removing cached logout requests from the distributed cache.
+        /// Contains the logic responsible for removing cached logout requests from the distributed cache.
         /// Note: this handler is not used when the OpenID Connect request is not initially handled by ASP.NET Core.
         /// </summary>
         public class RemoveCachedRequest : IOpenIddictServerHandler<ApplyLogoutResponseContext>
@@ -280,7 +281,7 @@ public static partial class OpenIddictServerAspNetCoreHandlers
 
             public RemoveCachedRequest() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0116));
 
-            public RemoveCachedRequest(IDistributedCache cache)
+            public RemoveCachedRequest(IDistributedCache cache!!)
                 => _cache = cache;
 
             /// <summary>
@@ -296,13 +297,8 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ApplyLogoutResponseContext context)
+            public ValueTask HandleAsync(ApplyLogoutResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (string.IsNullOrEmpty(context.Request?.RequestId))
                 {
                     return default;
@@ -314,12 +310,12 @@ public static partial class OpenIddictServerAspNetCoreHandlers
 
                 // Note: the cache key is always prefixed with a specific marker
                 // to avoid collisions with the other types of cached payloads.
-                return new ValueTask(_cache.RemoveAsync(Cache.LogoutRequest + context.Request.RequestId));
+                return new(_cache.RemoveAsync(Cache.LogoutRequest + context.Request.RequestId));
             }
         }
 
         /// <summary>
-        /// Contains the logic responsible of processing logout responses.
+        /// Contains the logic responsible for processing logout responses.
         /// Note: this handler is not used when the OpenID Connect request is not initially handled by ASP.NET Core.
         /// </summary>
         public class ProcessQueryResponse : IOpenIddictServerHandler<ApplyLogoutResponseContext>
@@ -336,20 +332,12 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ApplyLogoutResponseContext context)
+            public ValueTask HandleAsync(ApplyLogoutResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // This handler only applies to ASP.NET Core requests. If the HTTP context cannot be resolved,
                 // this may indicate that the request was incorrectly processed by another server stack.
-                var response = context.Transaction.GetHttpRequest()?.HttpContext.Response;
-                if (response is null)
-                {
+                var response = context.Transaction.GetHttpRequest()?.HttpContext.Response ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0114));
-                }
 
                 if (string.IsNullOrEmpty(context.PostLogoutRedirectUri))
                 {
@@ -392,7 +380,7 @@ public static partial class OpenIddictServerAspNetCoreHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of processing logout responses that should trigger a host redirection.
+        /// Contains the logic responsible for processing logout responses that should trigger a host redirection.
         /// Note: this handler is not used when the OpenID Connect request is not initially handled by ASP.NET Core.
         /// </summary>
         public class ProcessHostRedirectionResponse : IOpenIddictServerHandler<ApplyLogoutResponseContext>
@@ -409,20 +397,12 @@ public static partial class OpenIddictServerAspNetCoreHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ApplyLogoutResponseContext context)
+            public ValueTask HandleAsync(ApplyLogoutResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // This handler only applies to ASP.NET Core requests. If the HTTP context cannot be resolved,
                 // this may indicate that the request was incorrectly processed by another server stack.
-                var response = context.Transaction.GetHttpRequest()?.HttpContext.Response;
-                if (response is null)
-                {
+                var response = context.Transaction.GetHttpRequest()?.HttpContext.Response ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0114));
-                }
 
                 // Note: this handler only executes if no post_logout_redirect_uri was specified
                 // and if the response doesn't correspond to an error, that must be handled locally.

@@ -57,13 +57,13 @@ public static partial class OpenIddictServerHandlers
             NormalizeErrorResponse.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of extracting introspection requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for extracting introspection requests and invoking the corresponding event handlers.
         /// </summary>
         public class ExtractIntrospectionRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ExtractIntrospectionRequest(IOpenIddictServerDispatcher dispatcher)
+            public ExtractIntrospectionRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -78,13 +78,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ExtractIntrospectionRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -119,13 +114,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating introspection requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for validating introspection requests and invoking the corresponding event handlers.
         /// </summary>
         public class ValidateIntrospectionRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ValidateIntrospectionRequest(IOpenIddictServerDispatcher dispatcher)
+            public ValidateIntrospectionRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -140,13 +135,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ValidateIntrospectionRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -180,13 +170,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of handling introspection requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for handling introspection requests and invoking the corresponding event handlers.
         /// </summary>
         public class HandleIntrospectionRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public HandleIntrospectionRequest(IOpenIddictServerDispatcher dispatcher)
+            public HandleIntrospectionRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -201,13 +191,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new HandleIntrospectionRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -283,13 +268,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of processing sign-in responses and invoking the corresponding event handlers.
+        /// Contains the logic responsible for processing sign-in responses and invoking the corresponding event handlers.
         /// </summary>
         public class ApplyIntrospectionResponse<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ApplyIntrospectionResponse(IOpenIddictServerDispatcher dispatcher)
+            public ApplyIntrospectionResponse(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -304,13 +289,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(TContext context)
+            public async ValueTask HandleAsync(TContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ApplyIntrospectionResponseContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -331,7 +311,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests that don't specify a token.
+        /// Contains the logic responsible for rejecting introspection requests that don't specify a token.
         /// </summary>
         public class ValidateTokenParameter : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
         {
@@ -346,13 +326,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // Reject introspection requests missing the mandatory token parameter.
                 if (string.IsNullOrEmpty(context.Request.Token))
                 {
@@ -371,7 +346,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests that don't specify a client identifier.
+        /// Contains the logic responsible for rejecting introspection requests that don't specify a client identifier.
         /// </summary>
         public class ValidateClientIdParameter : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
         {
@@ -386,13 +361,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // At this stage, reject the introspection request unless the client identification requirement was disabled.
                 if (!context.Options.AcceptAnonymousClients && string.IsNullOrEmpty(context.ClientId))
                 {
@@ -411,7 +381,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests that use an invalid client_id.
+        /// Contains the logic responsible for rejecting introspection requests that use an invalid client_id.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateClientId : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
@@ -420,7 +390,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientId() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientId(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientId(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -436,13 +406,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
                 // Retrieve the application details corresponding to the requested client_id.
@@ -463,7 +428,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests made by applications
+        /// Contains the logic responsible for rejecting introspection requests made by applications
         /// whose client type is not compatible with the presence or absence of a client secret.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -473,7 +438,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientType() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientType(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientType(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -489,20 +454,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
                 {
@@ -538,7 +495,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests specifying an invalid client secret.
+        /// Contains the logic responsible for rejecting introspection requests specifying an invalid client secret.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateClientSecret : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
@@ -547,7 +504,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientSecret() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientSecret(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientSecret(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -563,20 +520,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // If the application is a public client, don't validate the client secret.
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
@@ -601,7 +550,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests made by
+        /// Contains the logic responsible for rejecting introspection requests made by
         /// applications that haven't been granted the introspection endpoint permission.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -611,7 +560,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateEndpointPermissions() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateEndpointPermissions(IOpenIddictApplicationManager applicationManager)
+            public ValidateEndpointPermissions(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -628,20 +577,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // Reject the request if the application is not allowed to use the introspection endpoint.
                 if (!await _applicationManager.HasPermissionAsync(application, Permissions.Endpoints.Introspection))
@@ -659,13 +600,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests that don't specify a valid token.
+        /// Contains the logic responsible for rejecting introspection requests that don't specify a valid token.
         /// </summary>
         public class ValidateToken : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ValidateToken(IOpenIddictServerDispatcher dispatcher)
+            public ValidateToken(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -679,13 +620,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ProcessAuthenticationContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -720,7 +656,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests that specify an unsupported token.
+        /// Contains the logic responsible for rejecting introspection requests that specify an unsupported token.
         /// </summary>
         public class ValidateTokenType : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
         {
@@ -735,13 +671,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 if (!context.Principal.HasTokenType(TokenTypeHints.AccessToken) &&
@@ -762,7 +693,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting introspection requests that specify a token
+        /// Contains the logic responsible for rejecting introspection requests that specify a token
         /// that cannot be introspected by the client application sending the introspection requests.
         /// </summary>
         public class ValidateAuthorizedParty : IOpenIddictServerHandler<ValidateIntrospectionRequestContext>
@@ -782,13 +713,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context)
+            public ValueTask HandleAsync(ValidateIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
@@ -832,7 +758,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of attaching the principal
+        /// Contains the logic responsible for attaching the principal
         /// extracted from the introspected token to the event context.
         /// </summary>
         public class AttachPrincipal : IOpenIddictServerHandler<HandleIntrospectionRequestContext>
@@ -848,13 +774,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleIntrospectionRequestContext context)
+            public ValueTask HandleAsync(HandleIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = context.Transaction.GetProperty<ValidateIntrospectionRequestContext>(
                     typeof(ValidateIntrospectionRequestContext).FullName!) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0007));
@@ -868,7 +789,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of attaching the metadata claims extracted from the token the event context.
+        /// Contains the logic responsible for attaching the metadata claims extracted from the token the event context.
         /// </summary>
         public class AttachMetadataClaims : IOpenIddictServerHandler<HandleIntrospectionRequestContext>
         {
@@ -883,13 +804,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleIntrospectionRequestContext context)
+            public ValueTask HandleAsync(HandleIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 context.TokenId = context.Principal.GetClaim(Claims.JwtId);
@@ -917,7 +833,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of attaching the application-specific claims extracted from the token the event context.
+        /// Contains the logic responsible for attaching the application-specific claims extracted from the token the event context.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class AttachApplicationClaims : IOpenIddictServerHandler<HandleIntrospectionRequestContext>
@@ -926,7 +842,7 @@ public static partial class OpenIddictServerHandlers
 
             public AttachApplicationClaims() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public AttachApplicationClaims(IOpenIddictApplicationManager applicationManager)
+            public AttachApplicationClaims(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -942,13 +858,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(HandleIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(HandleIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.Request.ClientId), SR.FormatID4000(Parameters.ClientId));
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
@@ -967,11 +878,8 @@ public static partial class OpenIddictServerHandlers
                     return;
                 }
 
-                var application = await _applicationManager.FindByClientIdAsync(context.Request.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.Request.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // Public clients are not allowed to access sensitive claims as authentication cannot be enforced.
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
@@ -1088,7 +996,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of converting introspection errors to standard active: false responses.
+        /// Contains the logic responsible for converting introspection errors to standard active: false responses.
         /// </summary>
         public class NormalizeErrorResponse : IOpenIddictServerHandler<ApplyIntrospectionResponseContext>
         {
@@ -1103,13 +1011,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ApplyIntrospectionResponseContext context)
+            public ValueTask HandleAsync(ApplyIntrospectionResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (string.IsNullOrEmpty(context.Error))
                 {
                     return default;

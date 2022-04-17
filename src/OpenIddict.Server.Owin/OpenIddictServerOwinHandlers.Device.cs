@@ -51,7 +51,7 @@ public static partial class OpenIddictServerOwinHandlers
     }
 
     /// <summary>
-    /// Contains the logic responsible of processing verification responses that should trigger a host redirection.
+    /// Contains the logic responsible for processing verification responses that should trigger a host redirection.
     /// Note: this handler is not used when the OpenID Connect request is not initially handled by OWIN.
     /// </summary>
     public class ProcessHostRedirectionResponse : IOpenIddictServerHandler<ApplyVerificationResponseContext>
@@ -68,20 +68,12 @@ public static partial class OpenIddictServerOwinHandlers
                 .Build();
 
         /// <inheritdoc/>
-        public ValueTask HandleAsync(ApplyVerificationResponseContext context)
+        public ValueTask HandleAsync(ApplyVerificationResponseContext context!!)
         {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             // This handler only applies to OWIN requests. If The OWIN request cannot be resolved,
             // this may indicate that the request was incorrectly processed by another server stack.
-            var response = context.Transaction.GetOwinRequest()?.Context.Response;
-            if (response is null)
-            {
+            var response = context.Transaction.GetOwinRequest()?.Context.Response ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0120));
-            }
 
             // Note: this handler only redirects the user agent to the address specified in
             // the properties when there's no error or if the error is an access_denied error.
@@ -92,7 +84,7 @@ public static partial class OpenIddictServerOwinHandlers
             }
 
             var properties = context.Transaction.GetProperty<AuthenticationProperties>(typeof(AuthenticationProperties).FullName!);
-            if (properties is not null && !string.IsNullOrEmpty(properties.RedirectUri))
+            if (!string.IsNullOrEmpty(properties?.RedirectUri))
             {
                 response.Redirect(properties.RedirectUri);
 

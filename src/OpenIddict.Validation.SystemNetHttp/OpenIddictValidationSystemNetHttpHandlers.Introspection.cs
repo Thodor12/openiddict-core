@@ -32,7 +32,7 @@ public static partial class OpenIddictValidationSystemNetHttpHandlers
             DisposeHttpResponse<ExtractIntrospectionResponseContext>.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of attaching the client credentials to the HTTP Authorization header.
+        /// Contains the logic responsible for attaching the client credentials to the HTTP Authorization header.
         /// </summary>
         public class AttachBasicAuthenticationCredentials : IOpenIddictValidationHandler<PrepareIntrospectionRequestContext>
         {
@@ -48,22 +48,14 @@ public static partial class OpenIddictValidationSystemNetHttpHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(PrepareIntrospectionRequestContext context)
+            public async ValueTask HandleAsync(PrepareIntrospectionRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Request is not null, SR.GetResourceString(SR.ID4008));
 
                 // This handler only applies to System.Net.Http requests. If the HTTP request cannot be resolved,
                 // this may indicate that the request was incorrectly processed by another client stack.
-                var request = context.Transaction.GetHttpRequestMessage();
-                if (request is null)
-                {
+                var request = context.Transaction.GetHttpRequestMessage() ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0173));
-                }
 
                 // If no client identifier was attached to the request, skip the following logic.
                 if (string.IsNullOrEmpty(context.Request.ClientId))
@@ -73,6 +65,12 @@ public static partial class OpenIddictValidationSystemNetHttpHandlers
 
                 var configuration = await context.Options.ConfigurationManager.GetConfigurationAsync(default) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0140));
+
+                // Ensure the issuer resolved from the configuration matches the expected value.
+                if (context.Options.Issuer is not null && configuration.Issuer != context.Options.Issuer)
+                {
+                    throw new InvalidOperationException(SR.GetResourceString(SR.ID0307));
+                }
 
                 // The OAuth 2.0 specification recommends sending the client credentials using basic authentication.
                 // However, this authentication method is known to have compatibility issues with the way the

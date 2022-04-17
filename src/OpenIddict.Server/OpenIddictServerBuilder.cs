@@ -20,8 +20,8 @@ public class OpenIddictServerBuilder
     /// Initializes a new instance of <see cref="OpenIddictServerBuilder"/>.
     /// </summary>
     /// <param name="services">The services collection.</param>
-    public OpenIddictServerBuilder(IServiceCollection services)
-        => Services = services ?? throw new ArgumentNullException(nameof(services));
+    public OpenIddictServerBuilder(IServiceCollection services!!)
+        => Services = services;
 
     /// <summary>
     /// Gets the services collection.
@@ -37,14 +37,9 @@ public class OpenIddictServerBuilder
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public OpenIddictServerBuilder AddEventHandler<TContext>(
-        Action<OpenIddictServerHandlerDescriptor.Builder<TContext>> configuration)
+        Action<OpenIddictServerHandlerDescriptor.Builder<TContext>> configuration!!)
         where TContext : OpenIddictServerEvents.BaseContext
     {
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
         // Note: handlers registered using this API are assumed to be custom handlers by default.
         var builder = OpenIddictServerHandlerDescriptor.CreateBuilder<TContext>()
             .SetType(OpenIddictServerHandlerType.Custom);
@@ -60,13 +55,8 @@ public class OpenIddictServerBuilder
     /// <param name="descriptor">The handler descriptor.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
-    public OpenIddictServerBuilder AddEventHandler(OpenIddictServerHandlerDescriptor descriptor)
+    public OpenIddictServerBuilder AddEventHandler(OpenIddictServerHandlerDescriptor descriptor!!)
     {
-        if (descriptor is null)
-        {
-            throw new ArgumentNullException(nameof(descriptor));
-        }
-
         // Register the handler in the services collection.
         Services.Add(descriptor.ServiceDescriptor);
 
@@ -79,13 +69,8 @@ public class OpenIddictServerBuilder
     /// <param name="descriptor">The descriptor corresponding to the handler to remove.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
-    public OpenIddictServerBuilder RemoveEventHandler(OpenIddictServerHandlerDescriptor descriptor)
+    public OpenIddictServerBuilder RemoveEventHandler(OpenIddictServerHandlerDescriptor descriptor!!)
     {
-        if (descriptor is null)
-        {
-            throw new ArgumentNullException(nameof(descriptor));
-        }
-
         Services.RemoveAll(descriptor.ServiceDescriptor.ServiceType);
 
         Services.PostConfigure<OpenIddictServerOptions>(options =>
@@ -108,13 +93,8 @@ public class OpenIddictServerBuilder
     /// <param name="configuration">The delegate used to configure the OpenIddict options.</param>
     /// <remarks>This extension can be safely called multiple times.</remarks>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder Configure(Action<OpenIddictServerOptions> configuration)
+    public OpenIddictServerBuilder Configure(Action<OpenIddictServerOptions> configuration!!)
     {
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
         Services.Configure(configuration);
 
         return this;
@@ -290,15 +270,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetAuthorizationEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetAuthorizationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetAuthorizationEndpointUris(params string[] addresses!!)
+        => SetAuthorizationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the authorization endpoint.
@@ -307,13 +280,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetAuthorizationEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetAuthorizationEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -338,15 +306,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetConfigurationEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetConfigurationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetConfigurationEndpointUris(params string[] addresses!!)
+        => SetConfigurationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the configuration endpoint.
@@ -355,13 +316,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetConfigurationEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetConfigurationEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -386,15 +342,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetCryptographyEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetCryptographyEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetCryptographyEndpointUris(params string[] addresses!!)
+        => SetCryptographyEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the cryptography endpoint.
@@ -403,13 +352,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetCryptographyEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetCryptographyEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -434,15 +378,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetDeviceEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetDeviceEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetDeviceEndpointUris(params string[] addresses!!)
+        => SetDeviceEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the device endpoint.
@@ -451,13 +388,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetDeviceEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetDeviceEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -482,15 +414,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetIntrospectionEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetIntrospectionEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetIntrospectionEndpointUris(params string[] addresses!!)
+        => SetIntrospectionEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the introspection endpoint.
@@ -499,13 +424,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetIntrospectionEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetIntrospectionEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -530,15 +450,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetLogoutEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetLogoutEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetLogoutEndpointUris(params string[] addresses!!)
+        => SetLogoutEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the logout endpoint.
@@ -547,13 +460,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetLogoutEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetLogoutEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -578,15 +486,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetRevocationEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetRevocationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetRevocationEndpointUris(params string[] addresses!!)
+        => SetRevocationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the revocation endpoint.
@@ -595,13 +496,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetRevocationEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetRevocationEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -626,15 +522,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetTokenEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetTokenEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetTokenEndpointUris(params string[] addresses!!)
+        => SetTokenEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the token endpoint.
@@ -643,13 +532,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetTokenEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetTokenEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -674,15 +558,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetUserinfoEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetUserinfoEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetUserinfoEndpointUris(params string[] addresses!!)
+        => SetUserinfoEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the userinfo endpoint.
@@ -691,13 +568,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetUserinfoEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetUserinfoEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -722,15 +594,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetVerificationEndpointUris(params string[] addresses)
-    {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
-        return SetVerificationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
-    }
+    public OpenIddictServerBuilder SetVerificationEndpointUris(params string[] addresses!!)
+        => SetVerificationEndpointUris(addresses.Select(address => new Uri(address, UriKind.RelativeOrAbsolute)).ToArray());
 
     /// <summary>
     /// Sets the relative or absolute URLs associated to the verification endpoint.
@@ -739,13 +604,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="addresses">The addresses associated to the endpoint.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetVerificationEndpointUris(params Uri[] addresses)
+    public OpenIddictServerBuilder SetVerificationEndpointUris(params Uri[] addresses!!)
     {
-        if (addresses is null)
-        {
-            throw new ArgumentNullException(nameof(addresses));
-        }
-
         if (addresses.Any(address => !address.IsWellFormedOriginalString()))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0072), nameof(addresses));
@@ -865,14 +725,9 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="claims">The supported claims.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder RegisterClaims(params string[] claims)
+    public OpenIddictServerBuilder RegisterClaims(params string[] claims!!)
     {
-        if (claims is null)
-        {
-            throw new ArgumentNullException(nameof(claims));
-        }
-
-        if (claims.Any(claim => string.IsNullOrEmpty(claim)))
+        if (claims.Any(string.IsNullOrEmpty))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0073), nameof(claims));
         }
@@ -886,14 +741,9 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="scopes">The supported scopes.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder RegisterScopes(params string[] scopes)
+    public OpenIddictServerBuilder RegisterScopes(params string[] scopes!!)
     {
-        if (scopes is null)
-        {
-            throw new ArgumentNullException(nameof(scopes));
-        }
-
-        if (scopes.Any(scope => string.IsNullOrEmpty(scope)))
+        if (scopes.Any(string.IsNullOrEmpty))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0074), nameof(scopes));
         }
@@ -915,7 +765,7 @@ public class OpenIddictServerBuilder
     /// a new access token by making a grant_type=refresh_token token request
     /// or a prompt=none authorization request, depending on the selected flow.
     /// Using long-lived access tokens or tokens that never expire is not recommended.
-    /// While discouraged, <c>null</c> can be specified to issue tokens that never expire.
+    /// While discouraged, <see langword="null"/> can be specified to issue tokens that never expire.
     /// </summary>
     /// <param name="lifetime">The access token lifetime.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
@@ -926,7 +776,7 @@ public class OpenIddictServerBuilder
     /// Sets the authorization code lifetime, after which client applications
     /// are unable to send a grant_type=authorization_code token request.
     /// Using short-lived authorization codes is strongly recommended.
-    /// While discouraged, <c>null</c> can be specified to issue codes that never expire.
+    /// While discouraged, <see langword="null"/> can be specified to issue codes that never expire.
     /// </summary>
     /// <param name="lifetime">The authorization code lifetime.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
@@ -937,7 +787,7 @@ public class OpenIddictServerBuilder
     /// Sets the device code lifetime, after which client applications are unable to
     /// send a grant_type=urn:ietf:params:oauth:grant-type:device_code token request.
     /// Using short-lived device codes is strongly recommended.
-    /// While discouraged, <c>null</c> can be specified to issue codes that never expire.
+    /// While discouraged, <see langword="null"/> can be specified to issue codes that never expire.
     /// </summary>
     /// <param name="lifetime">The authorization code lifetime.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
@@ -947,7 +797,7 @@ public class OpenIddictServerBuilder
     /// <summary>
     /// Sets the identity token lifetime, after which client
     /// applications should refuse processing identity tokens.
-    /// While discouraged, <c>null</c> can be specified to issue tokens that never expire.
+    /// While discouraged, <see langword="null"/> can be specified to issue tokens that never expire.
     /// </summary>
     /// <param name="lifetime">The identity token lifetime.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
@@ -959,7 +809,7 @@ public class OpenIddictServerBuilder
     /// a new authorization from the user. When sliding expiration is enabled,
     /// a new refresh token is always issued to the client application,
     /// which prolongs the validity period of the refresh token.
-    /// While discouraged, <c>null</c> can be specified to issue tokens that never expire.
+    /// While discouraged, <see langword="null"/> can be specified to issue tokens that never expire.
     /// </summary>
     /// <param name="lifetime">The refresh token lifetime.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
@@ -978,7 +828,7 @@ public class OpenIddictServerBuilder
     /// <summary>
     /// Sets the user code lifetime, after which they'll no longer be considered valid.
     /// Using short-lived device codes is strongly recommended.
-    /// While discouraged, <c>null</c> can be specified to issue codes that never expire.
+    /// While discouraged, <see langword="null"/> can be specified to issue codes that never expire.
     /// </summary>
     /// <param name="lifetime">The authorization code lifetime.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
@@ -991,15 +841,8 @@ public class OpenIddictServerBuilder
     /// </summary>
     /// <param name="address">The issuer address.</param>
     /// <returns>The <see cref="OpenIddictServerBuilder"/>.</returns>
-    public OpenIddictServerBuilder SetIssuer(Uri address)
-    {
-        if (address is null)
-        {
-            throw new ArgumentNullException(nameof(address));
-        }
-
-        return Configure(options => options.Issuer = address);
-    }
+    public OpenIddictServerBuilder SetIssuer(Uri address!!)
+        => Configure(options => options.Issuer = address);
 
     /// <summary>
     /// Configures OpenIddict to use reference tokens, so that the access token payloads

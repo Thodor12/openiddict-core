@@ -9,13 +9,17 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Primitives;
 
+#if SUPPORTS_JSON_NODES
+using System.Text.Json.Nodes;
+#endif
+
 namespace OpenIddict.Abstractions;
 
 /// <summary>
 /// Represents a generic OpenIddict response.
 /// </summary>
 /// <remarks>
-/// Security notice: developers instantiating this type are responsible of ensuring that the
+/// Security notice: developers instantiating this type are responsible for ensuring that the
 /// imported parameters are safe and won't cause the resulting message to grow abnormally,
 /// which may result in an excessive memory consumption and a potential denial of service.
 /// </remarks>
@@ -40,6 +44,18 @@ public class OpenIddictResponse : OpenIddictMessage
         : base(parameters)
     {
     }
+
+#if SUPPORTS_JSON_NODES
+    /// <summary>
+    /// Initializes a new OpenIddict response.
+    /// </summary>
+    /// <param name="parameters">The response parameters.</param>
+    /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
+    public OpenIddictResponse(JsonObject parameters)
+        : base(parameters)
+    {
+    }
+#endif
 
     /// <summary>
     /// Initializes a new OpenIddict response.
@@ -151,6 +167,15 @@ public class OpenIddictResponse : OpenIddictMessage
     {
         get => (string?) GetParameter(OpenIddictConstants.Parameters.IdToken);
         set => SetParameter(OpenIddictConstants.Parameters.IdToken, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the "iss" parameter.
+    /// </summary>
+    public string? Iss
+    {
+        get => (string?) GetParameter(OpenIddictConstants.Parameters.Iss);
+        set => SetParameter(OpenIddictConstants.Parameters.Iss, value);
     }
 
     /// <summary>

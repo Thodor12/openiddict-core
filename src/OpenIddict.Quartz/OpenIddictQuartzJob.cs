@@ -28,7 +28,7 @@ public class OpenIddictQuartzJob : IJob
     /// </summary>
     /// <param name="options">The OpenIddict Quartz.NET options.</param>
     /// <param name="provider">The service provider.</param>
-    public OpenIddictQuartzJob(IOptionsMonitor<OpenIddictQuartzOptions> options, IServiceProvider provider)
+    public OpenIddictQuartzJob(IOptionsMonitor<OpenIddictQuartzOptions> options!!, IServiceProvider provider!!)
     {
         _options = options;
         _provider = provider;
@@ -42,13 +42,8 @@ public class OpenIddictQuartzJob : IJob
         group: typeof(OpenIddictQuartzJob).Assembly.GetName().Name!);
 
     /// <inheritdoc/>
-    public async Task Execute(IJobExecutionContext context)
+    public async Task Execute(IJobExecutionContext context!!)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
-
         List<Exception>? exceptions = null;
 
         // Note: this job is registered as a transient service. As such, it cannot directly depend on scoped services
@@ -57,7 +52,7 @@ public class OpenIddictQuartzJob : IJob
 
         try
         {
-            // Note: this background task is responsible of automatically removing orphaned tokens/authorizations
+            // Note: this background task is responsible for automatically removing orphaned tokens/authorizations
             // (i.e tokens that are no longer valid and ad-hoc authorizations that have no valid tokens associated).
             // Import: since tokens associated to ad-hoc authorizations are not removed as part of the same operation,
             // the tokens MUST be deleted before removing the ad-hoc authorizations that no longer have any token.

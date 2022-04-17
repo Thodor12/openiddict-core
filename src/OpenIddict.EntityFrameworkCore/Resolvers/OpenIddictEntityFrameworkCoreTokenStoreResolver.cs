@@ -22,9 +22,9 @@ public class OpenIddictEntityFrameworkCoreTokenStoreResolver : IOpenIddictTokenS
     private readonly IServiceProvider _provider;
 
     public OpenIddictEntityFrameworkCoreTokenStoreResolver(
-        TypeResolutionCache cache,
-        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options,
-        IServiceProvider provider)
+        TypeResolutionCache cache!!,
+        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options!!,
+        IServiceProvider provider!!)
     {
         _cache = cache;
         _options = options;
@@ -47,17 +47,11 @@ public class OpenIddictEntityFrameworkCoreTokenStoreResolver : IOpenIddictTokenS
 
         var type = _cache.GetOrAdd(typeof(TToken), key =>
         {
-            var root = OpenIddictHelpers.FindGenericBaseType(key, typeof(OpenIddictEntityFrameworkCoreToken<,,>));
-            if (root is null)
-            {
+            var root = OpenIddictHelpers.FindGenericBaseType(key, typeof(OpenIddictEntityFrameworkCoreToken<,,>)) ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0256));
-            }
 
-            var context = _options.CurrentValue.DbContextType;
-            if (context is null)
-            {
+            var context = _options.CurrentValue.DbContextType ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0253));
-            }
 
             return typeof(OpenIddictEntityFrameworkCoreTokenStore<,,,,>).MakeGenericType(
                 /* TToken: */ key,

@@ -29,7 +29,7 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TContext> :
     public OpenIddictEntityFrameworkCoreTokenStore(
         IMemoryCache cache,
         TContext context,
-        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options)
+        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options!!)
         : base(cache, context, options)
     {
     }
@@ -50,7 +50,7 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TContext, TKey> :
     public OpenIddictEntityFrameworkCoreTokenStore(
         IMemoryCache cache,
         TContext context,
-        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options)
+        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options!!)
         : base(cache, context, options)
     {
     }
@@ -72,9 +72,9 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     where TKey : notnull, IEquatable<TKey>
 {
     public OpenIddictEntityFrameworkCoreTokenStore(
-        IMemoryCache cache,
-        TContext context,
-        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options)
+        IMemoryCache cache!!,
+        TContext context!!,
+        IOptionsMonitor<OpenIddictEntityFrameworkCoreOptions> options!!)
     {
         Cache = cache;
         Context = context;
@@ -116,37 +116,20 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
         => await Tokens.AsQueryable().LongCountAsync(cancellationToken);
 
     /// <inheritdoc/>
-    public virtual async ValueTask<long> CountAsync<TResult>(Func<IQueryable<TToken>, IQueryable<TResult>> query, CancellationToken cancellationToken)
-    {
-        if (query is null)
-        {
-            throw new ArgumentNullException(nameof(query));
-        }
-
-        return await query(Tokens).LongCountAsync(cancellationToken);
-    }
+    public virtual async ValueTask<long> CountAsync<TResult>(Func<IQueryable<TToken>, IQueryable<TResult>> query!!, CancellationToken cancellationToken)
+        => await query(Tokens).LongCountAsync(cancellationToken);
 
     /// <inheritdoc/>
-    public virtual async ValueTask CreateAsync(TToken token, CancellationToken cancellationToken)
+    public virtual async ValueTask CreateAsync(TToken token!!, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         Context.Add(token);
 
         await Context.SaveChangesAsync(cancellationToken);
     }
 
     /// <inheritdoc/>
-    public virtual async ValueTask DeleteAsync(TToken token, CancellationToken cancellationToken)
+    public virtual async ValueTask DeleteAsync(TToken token!!, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         Context.Remove(token);
 
         try
@@ -350,18 +333,13 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     }
 
     /// <inheritdoc/>
-    public virtual async ValueTask<string?> GetApplicationIdAsync(TToken token, CancellationToken cancellationToken)
+    public virtual async ValueTask<string?> GetApplicationIdAsync(TToken token!!, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         // If the application is not attached to the token, try to load it manually.
         if (token.Application is null)
         {
             var reference = Context.Entry(token).Reference(entry => entry.Application);
-            if (reference.EntityEntry.State == EntityState.Detached)
+            if (reference.EntityEntry.State is EntityState.Detached)
             {
                 return null;
             }
@@ -379,32 +357,20 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
 
     /// <inheritdoc/>
     public virtual async ValueTask<TResult?> GetAsync<TState, TResult>(
-        Func<IQueryable<TToken>, TState, IQueryable<TResult>> query,
+        Func<IQueryable<TToken>, TState, IQueryable<TResult>> query!!,
         TState state, CancellationToken cancellationToken)
-    {
-        if (query is null)
-        {
-            throw new ArgumentNullException(nameof(query));
-        }
-
-        return await query(Tokens.Include(token => token.Application)
+        => await query(Tokens.Include(token => token.Application)
             .Include(token => token.Authorization)
             .AsTracking(), state).FirstOrDefaultAsync(cancellationToken);
-    }
 
     /// <inheritdoc/>
-    public virtual async ValueTask<string?> GetAuthorizationIdAsync(TToken token, CancellationToken cancellationToken)
+    public virtual async ValueTask<string?> GetAuthorizationIdAsync(TToken token!!, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         // If the authorization is not attached to the token, try to load it manually.
         if (token.Authorization is null)
         {
             var reference = Context.Entry(token).Reference(entry => entry.Authorization);
-            if (reference.EntityEntry.State == EntityState.Detached)
+            if (reference.EntityEntry.State is EntityState.Detached)
             {
                 return null;
             }
@@ -421,70 +387,27 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask<DateTimeOffset?> GetCreationDateAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        if (token.CreationDate is null)
-        {
-            return new ValueTask<DateTimeOffset?>(result: null);
-        }
-
-        return new ValueTask<DateTimeOffset?>(DateTime.SpecifyKind(token.CreationDate.Value, DateTimeKind.Utc));
-    }
+    public virtual ValueTask<DateTimeOffset?> GetCreationDateAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.CreationDate is DateTime date ? DateTime.SpecifyKind(date, DateTimeKind.Utc) : null);
 
     /// <inheritdoc/>
-    public virtual ValueTask<DateTimeOffset?> GetExpirationDateAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        if (token.ExpirationDate is null)
-        {
-            return new ValueTask<DateTimeOffset?>(result: null);
-        }
-
-        return new ValueTask<DateTimeOffset?>(DateTime.SpecifyKind(token.ExpirationDate.Value, DateTimeKind.Utc));
-    }
+    public virtual ValueTask<DateTimeOffset?> GetExpirationDateAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.ExpirationDate is DateTime date ? DateTime.SpecifyKind(date, DateTimeKind.Utc) : null);
 
     /// <inheritdoc/>
-    public virtual ValueTask<string?> GetIdAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        return new ValueTask<string?>(ConvertIdentifierToString(token.Id));
-    }
+    public virtual ValueTask<string?> GetIdAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(ConvertIdentifierToString(token.Id));
 
     /// <inheritdoc/>
-    public virtual ValueTask<string?> GetPayloadAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        return new ValueTask<string?>(token.Payload);
-    }
+    public virtual ValueTask<string?> GetPayloadAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.Payload);
 
     /// <inheritdoc/>
-    public virtual ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(TToken token, CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(TToken token!!, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         if (string.IsNullOrEmpty(token.Properties))
         {
-            return new ValueTask<ImmutableDictionary<string, JsonElement>>(ImmutableDictionary.Create<string, JsonElement>());
+            return new(ImmutableDictionary.Create<string, JsonElement>());
         }
 
         // Note: parsing the stringified properties is an expensive operation.
@@ -506,80 +429,40 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
             return builder.ToImmutable();
         });
 
-        return new ValueTask<ImmutableDictionary<string, JsonElement>>(properties);
+        return new(properties);
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask<DateTimeOffset?> GetRedemptionDateAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        if (token.RedemptionDate is null)
-        {
-            return new ValueTask<DateTimeOffset?>(result: null);
-        }
-
-        return new ValueTask<DateTimeOffset?>(DateTime.SpecifyKind(token.RedemptionDate.Value, DateTimeKind.Utc));
-    }
+    public virtual ValueTask<DateTimeOffset?> GetRedemptionDateAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.RedemptionDate is DateTime date ? DateTime.SpecifyKind(date, DateTimeKind.Utc) : null);
 
     /// <inheritdoc/>
-    public virtual ValueTask<string?> GetReferenceIdAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        return new ValueTask<string?>(token.ReferenceId);
-    }
+    public virtual ValueTask<string?> GetReferenceIdAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.ReferenceId);
 
     /// <inheritdoc/>
-    public virtual ValueTask<string?> GetStatusAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        return new ValueTask<string?>(token.Status);
-    }
+    public virtual ValueTask<string?> GetStatusAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.Status);
 
     /// <inheritdoc/>
-    public virtual ValueTask<string?> GetSubjectAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        return new ValueTask<string?>(token.Subject);
-    }
+    public virtual ValueTask<string?> GetSubjectAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.Subject);
 
     /// <inheritdoc/>
-    public virtual ValueTask<string?> GetTypeAsync(TToken token, CancellationToken cancellationToken)
-    {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        return new ValueTask<string?>(token.Type);
-    }
+    public virtual ValueTask<string?> GetTypeAsync(TToken token!!, CancellationToken cancellationToken)
+        => new(token.Type);
 
     /// <inheritdoc/>
     public virtual ValueTask<TToken> InstantiateAsync(CancellationToken cancellationToken)
     {
         try
         {
-            return new ValueTask<TToken>(Activator.CreateInstance<TToken>());
+            return new(Activator.CreateInstance<TToken>());
         }
 
         catch (MemberAccessException exception)
         {
-            return new ValueTask<TToken>(Task.FromException<TToken>(
+            return new(Task.FromException<TToken>(
                 new InvalidOperationException(SR.GetResourceString(SR.ID0248), exception)));
         }
     }
@@ -607,19 +490,12 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
 
     /// <inheritdoc/>
     public virtual IAsyncEnumerable<TResult> ListAsync<TState, TResult>(
-        Func<IQueryable<TToken>, TState, IQueryable<TResult>> query,
+        Func<IQueryable<TToken>, TState, IQueryable<TResult>> query!!,
         TState state, CancellationToken cancellationToken)
-    {
-        if (query is null)
-        {
-            throw new ArgumentNullException(nameof(query));
-        }
-
-        return query(
+        => query(
             Tokens.Include(token => token.Application)
                   .Include(token => token.Authorization)
                   .AsTracking(), state).AsAsyncEnumerable(cancellationToken);
-    }
 
     /// <inheritdoc/>
     public virtual async ValueTask PruneAsync(DateTimeOffset threshold, CancellationToken cancellationToken)
@@ -710,30 +586,18 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     }
 
     /// <inheritdoc/>
-    public virtual async ValueTask SetApplicationIdAsync(TToken token, string? identifier, CancellationToken cancellationToken)
+    public virtual async ValueTask SetApplicationIdAsync(TToken token!!, string? identifier, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         if (!string.IsNullOrEmpty(identifier))
         {
             var key = ConvertIdentifierFromString(identifier);
 
             // Warning: FindAsync() is deliberately not used to work around a breaking change introduced
             // in Entity Framework Core 3.x (where a ValueTask instead of a Task is now returned).
-            var application =
-                await Applications.AsQueryable()
-                                  .AsTracking()
-                                  .FirstOrDefaultAsync(application => application.Id!.Equals(key), cancellationToken);
-
-            if (application is null)
-            {
+            token.Application = await Applications.AsQueryable()
+                .AsTracking()
+                .FirstOrDefaultAsync(application => application.Id!.Equals(key), cancellationToken) ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0250));
-            }
-
-            token.Application = application;
         }
 
         else
@@ -742,7 +606,7 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
             if (token.Application is null)
             {
                 var reference = Context.Entry(token).Reference(entry => entry.Application);
-                if (reference.EntityEntry.State == EntityState.Detached)
+                if (reference.EntityEntry.State is EntityState.Detached)
                 {
                     return;
                 }
@@ -755,30 +619,18 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     }
 
     /// <inheritdoc/>
-    public virtual async ValueTask SetAuthorizationIdAsync(TToken token, string? identifier, CancellationToken cancellationToken)
+    public virtual async ValueTask SetAuthorizationIdAsync(TToken token!!, string? identifier, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         if (!string.IsNullOrEmpty(identifier))
         {
             var key = ConvertIdentifierFromString(identifier);
 
             // Warning: FindAsync() is deliberately not used to work around a breaking change introduced
             // in Entity Framework Core 3.x (where a ValueTask instead of a Task is now returned).
-            var authorization =
-                await Authorizations.AsQueryable()
-                                    .AsTracking()
-                                    .FirstOrDefaultAsync(authorization => authorization.Id!.Equals(key), cancellationToken);
-
-            if (authorization is null)
-            {
+            token.Authorization = await Authorizations.AsQueryable()
+                .AsTracking()
+                .FirstOrDefaultAsync(authorization => authorization.Id!.Equals(key), cancellationToken) ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0251));
-            }
-
-            token.Authorization = authorization;
         }
 
         else
@@ -787,7 +639,7 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
             if (token.Authorization is null)
             {
                 var reference = Context.Entry(token).Reference(entry => entry.Authorization);
-                if (reference.EntityEntry.State == EntityState.Detached)
+                if (reference.EntityEntry.State is EntityState.Detached)
                 {
                     return;
                 }
@@ -800,54 +652,34 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetCreationDateAsync(TToken token, DateTimeOffset? date, CancellationToken cancellationToken)
+    public virtual ValueTask SetCreationDateAsync(TToken token!!, DateTimeOffset? date, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.CreationDate = date?.UtcDateTime;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetExpirationDateAsync(TToken token, DateTimeOffset? date, CancellationToken cancellationToken)
+    public virtual ValueTask SetExpirationDateAsync(TToken token!!, DateTimeOffset? date, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.ExpirationDate = date?.UtcDateTime;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetPayloadAsync(TToken token, string? payload, CancellationToken cancellationToken)
+    public virtual ValueTask SetPayloadAsync(TToken token!!, string? payload, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.Payload = payload;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetPropertiesAsync(TToken token,
+    public virtual ValueTask SetPropertiesAsync(TToken token!!,
         ImmutableDictionary<string, JsonElement> properties, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
-        if (properties is null || properties.IsEmpty)
+        if (properties is not { Count: > 0 })
         {
             token.Properties = null;
 
@@ -878,78 +710,48 @@ public class OpenIddictEntityFrameworkCoreTokenStore<TToken, TApplication, TAuth
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetRedemptionDateAsync(TToken token, DateTimeOffset? date, CancellationToken cancellationToken)
+    public virtual ValueTask SetRedemptionDateAsync(TToken token!!, DateTimeOffset? date, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.RedemptionDate = date?.UtcDateTime;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetReferenceIdAsync(TToken token, string? identifier, CancellationToken cancellationToken)
+    public virtual ValueTask SetReferenceIdAsync(TToken token!!, string? identifier, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.ReferenceId = identifier;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetStatusAsync(TToken token, string? status, CancellationToken cancellationToken)
+    public virtual ValueTask SetStatusAsync(TToken token!!, string? status, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.Status = status;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetSubjectAsync(TToken token, string? subject, CancellationToken cancellationToken)
+    public virtual ValueTask SetSubjectAsync(TToken token!!, string? subject, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.Subject = subject;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual ValueTask SetTypeAsync(TToken token, string? type, CancellationToken cancellationToken)
+    public virtual ValueTask SetTypeAsync(TToken token!!, string? type, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         token.Type = type;
 
         return default;
     }
 
     /// <inheritdoc/>
-    public virtual async ValueTask UpdateAsync(TToken token, CancellationToken cancellationToken)
+    public virtual async ValueTask UpdateAsync(TToken token!!, CancellationToken cancellationToken)
     {
-        if (token is null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
-
         Context.Attach(token);
 
         // Generate a new concurrency token and attach it

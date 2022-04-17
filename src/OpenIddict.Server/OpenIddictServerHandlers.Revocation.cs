@@ -50,13 +50,13 @@ public static partial class OpenIddictServerHandlers
             NormalizeErrorResponse.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of extracting revocation requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for extracting revocation requests and invoking the corresponding event handlers.
         /// </summary>
         public class ExtractRevocationRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ExtractRevocationRequest(IOpenIddictServerDispatcher dispatcher)
+            public ExtractRevocationRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -71,13 +71,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ExtractRevocationRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -112,13 +107,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating revocation requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for validating revocation requests and invoking the corresponding event handlers.
         /// </summary>
         public class ValidateRevocationRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ValidateRevocationRequest(IOpenIddictServerDispatcher dispatcher)
+            public ValidateRevocationRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -133,13 +128,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ValidateRevocationRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -173,13 +163,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of handling revocation requests and invoking the corresponding event handlers.
+        /// Contains the logic responsible for handling revocation requests and invoking the corresponding event handlers.
         /// </summary>
         public class HandleRevocationRequest : IOpenIddictServerHandler<ProcessRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public HandleRevocationRequest(IOpenIddictServerDispatcher dispatcher)
+            public HandleRevocationRequest(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -194,13 +184,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ProcessRequestContext context)
+            public async ValueTask HandleAsync(ProcessRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new HandleRevocationRequestContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -230,13 +215,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of processing sign-in responses and invoking the corresponding event handlers.
+        /// Contains the logic responsible for processing sign-in responses and invoking the corresponding event handlers.
         /// </summary>
         public class ApplyRevocationResponse<TContext> : IOpenIddictServerHandler<TContext> where TContext : BaseRequestContext
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ApplyRevocationResponse(IOpenIddictServerDispatcher dispatcher)
+            public ApplyRevocationResponse(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -251,13 +236,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(TContext context)
+            public async ValueTask HandleAsync(TContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ApplyRevocationResponseContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -278,7 +258,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests that don't specify a token.
+        /// Contains the logic responsible for rejecting revocation requests that don't specify a token.
         /// </summary>
         public class ValidateTokenParameter : IOpenIddictServerHandler<ValidateRevocationRequestContext>
         {
@@ -293,13 +273,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // Reject revocation requests missing the mandatory token parameter.
                 if (string.IsNullOrEmpty(context.Request.Token))
                 {
@@ -318,7 +293,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests that don't specify a client identifier.
+        /// Contains the logic responsible for rejecting revocation requests that don't specify a client identifier.
         /// </summary>
         public class ValidateClientIdParameter : IOpenIddictServerHandler<ValidateRevocationRequestContext>
         {
@@ -333,13 +308,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // At this stage, reject the revocation request unless the client identification requirement was disabled.
                 if (!context.Options.AcceptAnonymousClients && string.IsNullOrEmpty(context.ClientId))
                 {
@@ -358,7 +328,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests that use an invalid client_id.
+        /// Contains the logic responsible for rejecting revocation requests that use an invalid client_id.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateClientId : IOpenIddictServerHandler<ValidateRevocationRequestContext>
@@ -367,7 +337,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientId() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientId(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientId(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -383,13 +353,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public async ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
                 // Retrieve the application details corresponding to the requested client_id.
@@ -410,7 +375,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests made by applications
+        /// Contains the logic responsible for rejecting revocation requests made by applications
         /// whose client type is not compatible with the presence or absence of a client secret.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -420,7 +385,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientType() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientType(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientType(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -436,20 +401,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public async ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
                 {
@@ -485,7 +442,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests specifying an invalid client secret.
+        /// Contains the logic responsible for rejecting revocation requests specifying an invalid client secret.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateClientSecret : IOpenIddictServerHandler<ValidateRevocationRequestContext>
@@ -494,7 +451,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateClientSecret() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateClientSecret(IOpenIddictApplicationManager applicationManager)
+            public ValidateClientSecret(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -510,20 +467,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public async ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // If the application is a public client, don't validate the client secret.
                 if (await _applicationManager.HasClientTypeAsync(application, ClientTypes.Public))
@@ -548,7 +497,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests made by
+        /// Contains the logic responsible for rejecting revocation requests made by
         /// applications that haven't been granted the revocation endpoint permission.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -558,7 +507,7 @@ public static partial class OpenIddictServerHandlers
 
             public ValidateEndpointPermissions() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public ValidateEndpointPermissions(IOpenIddictApplicationManager applicationManager)
+            public ValidateEndpointPermissions(IOpenIddictApplicationManager applicationManager!!)
                 => _applicationManager = applicationManager;
 
             /// <summary>
@@ -575,20 +524,12 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public async ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
 
-                var application = await _applicationManager.FindByClientIdAsync(context.ClientId);
-                if (application is null)
-                {
+                var application = await _applicationManager.FindByClientIdAsync(context.ClientId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0032));
-                }
 
                 // Reject the request if the application is not allowed to use the revocation endpoint.
                 if (!await _applicationManager.HasPermissionAsync(application, Permissions.Endpoints.Revocation))
@@ -606,13 +547,13 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests that don't specify a valid token.
+        /// Contains the logic responsible for rejecting revocation requests that don't specify a valid token.
         /// </summary>
         public class ValidateToken : IOpenIddictServerHandler<ValidateRevocationRequestContext>
         {
             private readonly IOpenIddictServerDispatcher _dispatcher;
 
-            public ValidateToken(IOpenIddictServerDispatcher dispatcher)
+            public ValidateToken(IOpenIddictServerDispatcher dispatcher!!)
                 => _dispatcher = dispatcher;
 
             /// <summary>
@@ -626,13 +567,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public async ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = new ProcessAuthenticationContext(context.Transaction);
                 await _dispatcher.DispatchAsync(notification);
 
@@ -667,7 +603,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests that specify an unsupported token.
+        /// Contains the logic responsible for rejecting revocation requests that specify an unsupported token.
         /// </summary>
         public class ValidateTokenType : IOpenIddictServerHandler<ValidateRevocationRequestContext>
         {
@@ -682,13 +618,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 if (!context.Principal.HasTokenType(TokenTypeHints.AccessToken) &&
@@ -709,7 +640,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting revocation requests that specify a token
+        /// Contains the logic responsible for rejecting revocation requests that specify a token
         /// that cannot be revoked by the client application sending the revocation requests.
         /// </summary>
         public class ValidateAuthorizedParty : IOpenIddictServerHandler<ValidateRevocationRequestContext>
@@ -729,13 +660,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateRevocationRequestContext context)
+            public ValueTask HandleAsync(ValidateRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(!string.IsNullOrEmpty(context.ClientId), SR.FormatID4000(Parameters.ClientId));
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
@@ -779,7 +705,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of attaching the principal
+        /// Contains the logic responsible for attaching the principal
         /// extracted from the revoked token to the event context.
         /// </summary>
         public class AttachPrincipal : IOpenIddictServerHandler<HandleRevocationRequestContext>
@@ -795,13 +721,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(HandleRevocationRequestContext context)
+            public ValueTask HandleAsync(HandleRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var notification = context.Transaction.GetProperty<ValidateRevocationRequestContext>(
                     typeof(ValidateRevocationRequestContext).FullName!) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0007));
@@ -815,7 +736,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of revoking the token sent by the client application.
+        /// Contains the logic responsible for revoking the token sent by the client application.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class RevokeToken : IOpenIddictServerHandler<HandleRevocationRequestContext>
@@ -824,7 +745,7 @@ public static partial class OpenIddictServerHandlers
 
             public RevokeToken() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0016));
 
-            public RevokeToken(IOpenIddictTokenManager tokenManager)
+            public RevokeToken(IOpenIddictTokenManager tokenManager!!)
                 => _tokenManager = tokenManager;
 
             /// <summary>
@@ -839,13 +760,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(HandleRevocationRequestContext context)
+            public async ValueTask HandleAsync(HandleRevocationRequestContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 // Extract the token identifier from the authentication principal.
@@ -889,7 +805,7 @@ public static partial class OpenIddictServerHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of converting revocation errors to standard empty responses.
+        /// Contains the logic responsible for converting revocation errors to standard empty responses.
         /// </summary>
         public class NormalizeErrorResponse : IOpenIddictServerHandler<ApplyRevocationResponseContext>
         {
@@ -904,13 +820,8 @@ public static partial class OpenIddictServerHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ApplyRevocationResponseContext context)
+            public ValueTask HandleAsync(ApplyRevocationResponseContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (string.IsNullOrEmpty(context.Error))
                 {
                     return default;

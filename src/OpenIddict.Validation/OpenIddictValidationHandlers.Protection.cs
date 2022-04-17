@@ -35,7 +35,7 @@ public static partial class OpenIddictValidationHandlers
             ValidateAuthorizationEntry.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of resolving the validation parameters used to validate tokens.
+        /// Contains the logic responsible for resolving the validation parameters used to validate tokens.
         /// </summary>
         public class ResolveTokenValidationParameters : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -51,21 +51,38 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 var configuration = await context.Options.ConfigurationManager.GetConfigurationAsync(default) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0140));
+
+                // Ensure the issuer resolved from the configuration matches the expected value.
+                if (context.Options.Issuer is not null && configuration.Issuer != context.Options.Issuer)
+                {
+                    throw new InvalidOperationException(SR.GetResourceString(SR.ID0307));
+                }
 
                 // Clone the token validation parameters and set the issuer using the value found in the
                 // OpenID Connect server configuration (that can be static or retrieved using discovery).
                 var parameters = context.Options.TokenValidationParameters.Clone();
-                parameters.ValidIssuer ??= configuration.Issuer ?? context.Issuer?.AbsoluteUri;
-                parameters.ValidateIssuer = !string.IsNullOrEmpty(parameters.ValidIssuer);
+
+                parameters.ValidIssuers ??= configuration.Issuer switch
+                {
+                    null => null,
+
+                    // If the issuer URI doesn't contain any path/query/fragment, allow both http://www.fabrikam.com
+                    // and http://www.fabrikam.com/ (the recommended URI representation) to be considered valid.
+                    // See https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.3 for more information.
+                    { AbsolutePath: "/", Query.Length: 0, Fragment.Length: 0 } issuer => new[]
+                    {
+                        issuer.AbsoluteUri, // Uri.AbsoluteUri is normalized and always contains a trailing slash.
+                        issuer.AbsoluteUri.Substring(0, issuer.AbsoluteUri.Length - 1)
+                    },
+
+                    Uri issuer => new[] { issuer.AbsoluteUri }
+                };
+
+                parameters.ValidateIssuer = parameters.ValidIssuers is not null;
 
                 // Combine the signing keys registered statically in the token validation parameters
                 // with the signing keys resolved from the OpenID Connect server configuration.
@@ -98,7 +115,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating reference token identifiers.
+        /// Contains the logic responsible for validating reference token identifiers.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class ValidateReferenceTokenIdentifier : IOpenIddictValidationHandler<ValidateTokenContext>
@@ -107,7 +124,7 @@ public static partial class OpenIddictValidationHandlers
 
             public ValidateReferenceTokenIdentifier() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0139));
 
-            public ValidateReferenceTokenIdentifier(IOpenIddictTokenManager tokenManager)
+            public ValidateReferenceTokenIdentifier(IOpenIddictTokenManager tokenManager!!)
                 => _tokenManager = tokenManager;
 
             /// <summary>
@@ -123,13 +140,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // Reference tokens are base64url-encoded payloads of exactly 256 bits (generated using a
                 // crypto-secure RNG). If the token length differs, the token cannot be a reference token.
                 if (context.Token.Length != 43)
@@ -175,7 +187,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating tokens generated using IdentityModel.
+        /// Contains the logic responsible for validating tokens generated using IdentityModel.
         /// </summary>
         public class ValidateIdentityModelToken : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -191,26 +203,21 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // If a principal was already attached, don't overwrite it.
                 if (context.Principal is not null)
                 {
-                    return default;
+                    return;
                 }
 
                 // If the token cannot be read, don't return an error to allow another handler to validate it.
                 if (!context.SecurityTokenHandler.CanReadToken(context.Token))
                 {
-                    return default;
+                    return;
                 }
 
-                var result = context.SecurityTokenHandler.ValidateToken(context.Token, context.TokenValidationParameters);
+                var result = await context.SecurityTokenHandler.ValidateTokenAsync(context.Token, context.TokenValidationParameters);
                 if (!result.IsValid)
                 {
                     // If validation failed because of an unrecognized key identifier, inform the configuration manager
@@ -243,7 +250,7 @@ public static partial class OpenIddictValidationHandlers
                             _ => SR.FormatID8000(SR.ID2004)
                         });
 
-                    return default;
+                    return;
                 }
 
                 // Attach the principal extracted from the token to the parent event context and store
@@ -260,13 +267,11 @@ public static partial class OpenIddictValidationHandlers
                 });
 
                 context.Logger.LogTrace(SR.GetResourceString(SR.ID6001), context.Token, context.Principal.Claims);
-
-                return default;
             }
         }
 
         /// <summary>
-        /// Contains the logic responsible of validating the tokens using OAuth 2.0 introspection.
+        /// Contains the logic responsible for validating the tokens using OAuth 2.0 introspection.
         /// </summary>
         public class IntrospectToken : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -287,13 +292,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // If a principal was already attached, don't overwrite it.
                 if (context.Principal is not null)
                 {
@@ -305,23 +305,24 @@ public static partial class OpenIddictValidationHandlers
                 var configuration = await context.Options.ConfigurationManager.GetConfigurationAsync(default) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0140));
 
-                if (string.IsNullOrEmpty(configuration.IntrospectionEndpoint) ||
-                    !Uri.TryCreate(configuration.IntrospectionEndpoint, UriKind.Absolute, out Uri? address) ||
-                    !address.IsWellFormedOriginalString())
+                // Ensure the issuer resolved from the configuration matches the expected value.
+                if (context.Options.Issuer is not null && configuration.Issuer != context.Options.Issuer)
                 {
-                    context.Reject(
-                        error: Errors.ServerError,
-                        description: SR.GetResourceString(SR.ID2092),
-                        uri: SR.FormatID8000(SR.ID2092));
+                    throw new InvalidOperationException(SR.GetResourceString(SR.ID0307));
+                }
 
-                    return;
+                // Ensure the introspection endpoint is present and is a valid absolute URL.
+                if (configuration.IntrospectionEndpoint is not { IsAbsoluteUri: true } ||
+                   !configuration.IntrospectionEndpoint.IsWellFormedOriginalString())
+                {
+                    throw new InvalidOperationException(SR.FormatID0301(Metadata.IntrospectionEndpoint));
                 }
 
                 ClaimsPrincipal principal;
 
                 try
                 {
-                    principal = await _service.IntrospectTokenAsync(address, context.Token, context.ValidTokenTypes.Count switch
+                    principal = await _service.IntrospectTokenAsync(configuration.IntrospectionEndpoint, context.Token, context.ValidTokenTypes.Count switch
                     {
                         // Infer the token type hint sent to the authorization server to help speed up
                         // the token resolution lookup. If multiple types are accepted, no hint is sent.
@@ -374,7 +375,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of normalizing the scope claims stored in the tokens.
+        /// Contains the logic responsible for normalizing the scope claims stored in the tokens.
         /// </summary>
         public class NormalizeScopeClaims : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -389,13 +390,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (context.Principal is null)
                 {
                     return default;
@@ -419,7 +415,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of mapping internal claims used by OpenIddict.
+        /// Contains the logic responsible for mapping internal claims used by OpenIddict.
         /// </summary>
         public class MapInternalClaims : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -434,13 +430,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (context.Principal is null)
                 {
                     return default;
@@ -448,7 +439,7 @@ public static partial class OpenIddictValidationHandlers
 
                 // To reduce the size of tokens, some of the private claims used by OpenIddict
                 // are mapped to their standard equivalent before being removed from the token.
-                // This handler is responsible of adding back the private claims to the principal
+                // This handler is responsible for adding back the private claims to the principal
                 // when receiving the token (e.g "oi_prst" is resolved from the "scope" claim).
 
                 // In OpenIddict 3.0, the creation date of a token is stored in "oi_crt_dt".
@@ -522,7 +513,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of restoring the properties associated with a reference token entry.
+        /// Contains the logic responsible for restoring the properties associated with a reference token entry.
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
         public class RestoreReferenceTokenProperties : IOpenIddictValidationHandler<ValidateTokenContext>
@@ -531,7 +522,7 @@ public static partial class OpenIddictValidationHandlers
 
             public RestoreReferenceTokenProperties() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0139));
 
-            public RestoreReferenceTokenProperties(IOpenIddictTokenManager tokenManager)
+            public RestoreReferenceTokenProperties(IOpenIddictTokenManager tokenManager!!)
                 => _tokenManager = tokenManager;
 
             /// <summary>
@@ -547,23 +538,15 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (context.Principal is null || string.IsNullOrEmpty(context.TokenId))
                 {
                     return;
                 }
 
-                var token = await _tokenManager.FindByIdAsync(context.TokenId);
-                if (token is null)
-                {
+                var token = await _tokenManager.FindByIdAsync(context.TokenId) ??
                     throw new InvalidOperationException(SR.GetResourceString(SR.ID0021));
-                }
 
                 // Restore the creation/expiration dates/identifiers from the token entry metadata.
                 context.Principal.SetCreationDate(await _tokenManager.GetCreationDateAsync(token))
@@ -575,7 +558,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting authentication demands for which no valid principal was resolved.
+        /// Contains the logic responsible for rejecting authentication demands for which no valid principal was resolved.
         /// </summary>
         public class ValidatePrincipal : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -590,13 +573,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 if (context.Principal is null)
                 {
                     context.Reject(
@@ -627,7 +605,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting authentication demands containing expired access tokens.
+        /// Contains the logic responsible for rejecting authentication demands containing expired access tokens.
         /// </summary>
         public class ValidateExpirationDate : IOpenIddictValidationHandler<ValidateTokenContext>
         {
@@ -642,13 +620,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 var date = context.Principal.GetExpirationDate();
@@ -669,7 +642,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of rejecting authentication demands containing
+        /// Contains the logic responsible for rejecting authentication demands containing
         /// access tokens that were issued to be used by another audience/resource server.
         /// </summary>
         public class ValidateAudience : IOpenIddictValidationHandler<ValidateTokenContext>
@@ -685,13 +658,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(ValidateTokenContext context)
+            public ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 // If no explicit audience has been configured,
@@ -733,7 +701,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of authentication demands a token whose
+        /// Contains the logic responsible for authentication demands a token whose
         /// associated token entry is no longer valid (e.g was revoked).
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -743,7 +711,7 @@ public static partial class OpenIddictValidationHandlers
 
             public ValidateTokenEntry() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0139));
 
-            public ValidateTokenEntry(IOpenIddictTokenManager tokenManager)
+            public ValidateTokenEntry(IOpenIddictTokenManager tokenManager!!)
                 => _tokenManager = tokenManager;
 
             /// <summary>
@@ -759,13 +727,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 var identifier = context.Principal.GetTokenId();
@@ -797,7 +760,7 @@ public static partial class OpenIddictValidationHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of authentication demands a token whose
+        /// Contains the logic responsible for authentication demands a token whose
         /// associated authorization entry is no longer valid (e.g was revoked).
         /// Note: this handler is not used when the degraded mode is enabled.
         /// </summary>
@@ -807,7 +770,7 @@ public static partial class OpenIddictValidationHandlers
 
             public ValidateAuthorizationEntry() => throw new InvalidOperationException(SR.GetResourceString(SR.ID0142));
 
-            public ValidateAuthorizationEntry(IOpenIddictAuthorizationManager authorizationManager)
+            public ValidateAuthorizationEntry(IOpenIddictAuthorizationManager authorizationManager!!)
                 => _authorizationManager = authorizationManager;
 
             /// <summary>
@@ -823,13 +786,8 @@ public static partial class OpenIddictValidationHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public async ValueTask HandleAsync(ValidateTokenContext context)
+            public async ValueTask HandleAsync(ValidateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 Debug.Assert(context.Principal is { Identity: ClaimsIdentity }, SR.GetResourceString(SR.ID4006));
 
                 var identifier = context.Principal.GetAuthorizationId();

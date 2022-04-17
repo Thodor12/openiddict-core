@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using static OpenIddict.Server.AspNetCore.OpenIddictServerAspNetCoreConstants;
 using Properties = OpenIddict.Server.AspNetCore.OpenIddictServerAspNetCoreConstants.Properties;
 
 namespace OpenIddict.Server.AspNetCore;
@@ -27,12 +28,12 @@ public class OpenIddictServerAspNetCoreHandler : AuthenticationHandler<OpenIddic
     /// Creates a new instance of the <see cref="OpenIddictServerAspNetCoreHandler"/> class.
     /// </summary>
     public OpenIddictServerAspNetCoreHandler(
-        IOpenIddictServerDispatcher dispatcher,
-        IOpenIddictServerFactory factory,
-        IOptionsMonitor<OpenIddictServerAspNetCoreOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder,
-        ISystemClock clock)
+        IOpenIddictServerDispatcher dispatcher!!,
+        IOpenIddictServerFactory factory!!,
+        IOptionsMonitor<OpenIddictServerAspNetCoreOptions> options!!,
+        ILoggerFactory logger!!,
+        UrlEncoder encoder!!,
+        ISystemClock clock!!)
         : base(options, logger, encoder, clock)
     {
         _dispatcher = dispatcher;
@@ -191,75 +192,93 @@ public class OpenIddictServerAspNetCoreHandler : AuthenticationHandler<OpenIddic
             // Attach the tokens to allow any ASP.NET Core component (e.g a controller)
             // to retrieve them (e.g to make an API request to another application).
 
-            if (context.AccessTokenPrincipal is not null && !string.IsNullOrEmpty(context.AccessToken))
+            if (!string.IsNullOrEmpty(context.AccessToken))
             {
                 tokens ??= new(capacity: 1);
                 tokens.Add(new AuthenticationToken
                 {
-                    Name = TokenTypeHints.AccessToken,
+                    Name = Tokens.AccessToken,
                     Value = context.AccessToken
                 });
+            }
 
+            if (!string.IsNullOrEmpty(context.AuthorizationCode))
+            {
+                tokens ??= new(capacity: 1);
+                tokens.Add(new AuthenticationToken
+                {
+                    Name = Tokens.AuthorizationCode,
+                    Value = context.AuthorizationCode
+                });
+            }
+
+            if (!string.IsNullOrEmpty(context.DeviceCode))
+            {
+                tokens ??= new(capacity: 1);
+                tokens.Add(new AuthenticationToken
+                {
+                    Name = Tokens.DeviceCode,
+                    Value = context.DeviceCode
+                });
+            }
+
+            if (!string.IsNullOrEmpty(context.IdentityToken))
+            {
+                tokens ??= new(capacity: 1);
+                tokens.Add(new AuthenticationToken
+                {
+                    Name = Tokens.IdentityToken,
+                    Value = context.IdentityToken
+                });
+            }
+
+            if (!string.IsNullOrEmpty(context.RefreshToken))
+            {
+                tokens ??= new(capacity: 1);
+                tokens.Add(new AuthenticationToken
+                {
+                    Name = Tokens.RefreshToken,
+                    Value = context.RefreshToken
+                });
+            }
+
+            if (!string.IsNullOrEmpty(context.UserCode))
+            {
+                tokens ??= new(capacity: 1);
+                tokens.Add(new AuthenticationToken
+                {
+                    Name = Tokens.UserCode,
+                    Value = context.UserCode
+                });
+            }
+
+            if (context.AccessTokenPrincipal is not null)
+            {
                 properties.SetParameter(Properties.AccessTokenPrincipal, context.AccessTokenPrincipal);
             }
 
-            if (context.AuthorizationCodePrincipal is not null && !string.IsNullOrEmpty(context.AuthorizationCode))
+            if (context.AuthorizationCodePrincipal is not null)
             {
-                tokens ??= new(capacity: 1);
-                tokens.Add(new AuthenticationToken
-                {
-                    Name = TokenTypeHints.AuthorizationCode,
-                    Value = context.AuthorizationCode
-                });
-
                 properties.SetParameter(Properties.AuthorizationCodePrincipal, context.AuthorizationCodePrincipal);
             }
 
-            if (context.DeviceCodePrincipal is not null && !string.IsNullOrEmpty(context.DeviceCode))
+            if (context.DeviceCodePrincipal is not null)
             {
-                tokens ??= new(capacity: 1);
-                tokens.Add(new AuthenticationToken
-                {
-                    Name = TokenTypeHints.DeviceCode,
-                    Value = context.DeviceCode
-                });
-
                 properties.SetParameter(Properties.DeviceCodePrincipal, context.DeviceCodePrincipal);
             }
 
-            if (context.IdentityTokenPrincipal is not null && !string.IsNullOrEmpty(context.IdentityToken))
+            if (context.IdentityTokenPrincipal is not null)
             {
-                tokens ??= new(capacity: 1);
-                tokens.Add(new AuthenticationToken
-                {
-                    Name = TokenTypeHints.IdToken,
-                    Value = context.IdentityToken
-                });
-
                 properties.SetParameter(Properties.IdentityTokenPrincipal, context.IdentityTokenPrincipal);
             }
 
-            if (context.RefreshTokenPrincipal is not null && !string.IsNullOrEmpty(context.RefreshToken))
+            if (context.RefreshTokenPrincipal is not null)
             {
-                tokens ??= new(capacity: 1);
-                tokens.Add(new AuthenticationToken
-                {
-                    Name = TokenTypeHints.RefreshToken,
-                    Value = context.RefreshToken
-                });
-
                 properties.SetParameter(Properties.RefreshTokenPrincipal, context.RefreshTokenPrincipal);
             }
 
-            if (context.UserCodePrincipal is not null && !string.IsNullOrEmpty(context.UserCode))
+            if (context.UserCodePrincipal is not null)
             {
-                tokens ??= new(capacity: 1);
-                tokens.Add(new AuthenticationToken
-                {
-                    Name = TokenTypeHints.UserCode,
-                    Value = context.UserCode
-                });
-
                 properties.SetParameter(Properties.UserCodePrincipal, context.UserCodePrincipal);
             }
 
@@ -319,13 +338,8 @@ public class OpenIddictServerAspNetCoreHandler : AuthenticationHandler<OpenIddic
         => HandleChallengeAsync(properties);
 
     /// <inheritdoc/>
-    public async Task SignInAsync(ClaimsPrincipal user, AuthenticationProperties? properties)
+    public async Task SignInAsync(ClaimsPrincipal user!!, AuthenticationProperties? properties)
     {
-        if (user is null)
-        {
-            throw new ArgumentNullException(nameof(user));
-        }
-
         var transaction = Context.Features.Get<OpenIddictServerAspNetCoreFeature>()?.Transaction ??
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0112));
 

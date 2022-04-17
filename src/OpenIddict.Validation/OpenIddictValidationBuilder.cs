@@ -10,7 +10,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Validation;
 
@@ -25,8 +24,8 @@ public class OpenIddictValidationBuilder
     /// Initializes a new instance of <see cref="OpenIddictValidationBuilder"/>.
     /// </summary>
     /// <param name="services">The services collection.</param>
-    public OpenIddictValidationBuilder(IServiceCollection services)
-        => Services = services ?? throw new ArgumentNullException(nameof(services));
+    public OpenIddictValidationBuilder(IServiceCollection services!!)
+        => Services = services;
 
     /// <summary>
     /// Gets the services collection.
@@ -42,14 +41,9 @@ public class OpenIddictValidationBuilder
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public OpenIddictValidationBuilder AddEventHandler<TContext>(
-        Action<OpenIddictValidationHandlerDescriptor.Builder<TContext>> configuration)
+        Action<OpenIddictValidationHandlerDescriptor.Builder<TContext>> configuration!!)
         where TContext : OpenIddictValidationEvents.BaseContext
     {
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
         // Note: handlers registered using this API are assumed to be custom handlers by default.
         var builder = OpenIddictValidationHandlerDescriptor.CreateBuilder<TContext>()
             .SetType(OpenIddictValidationHandlerType.Custom);
@@ -65,13 +59,8 @@ public class OpenIddictValidationBuilder
     /// <param name="descriptor">The handler descriptor.</param>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
-    public OpenIddictValidationBuilder AddEventHandler(OpenIddictValidationHandlerDescriptor descriptor)
+    public OpenIddictValidationBuilder AddEventHandler(OpenIddictValidationHandlerDescriptor descriptor!!)
     {
-        if (descriptor is null)
-        {
-            throw new ArgumentNullException(nameof(descriptor));
-        }
-
         // Register the handler in the services collection.
         Services.Add(descriptor.ServiceDescriptor);
 
@@ -84,13 +73,8 @@ public class OpenIddictValidationBuilder
     /// <param name="descriptor">The descriptor corresponding to the handler to remove.</param>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
-    public OpenIddictValidationBuilder RemoveEventHandler(OpenIddictValidationHandlerDescriptor descriptor)
+    public OpenIddictValidationBuilder RemoveEventHandler(OpenIddictValidationHandlerDescriptor descriptor!!)
     {
-        if (descriptor is null)
-        {
-            throw new ArgumentNullException(nameof(descriptor));
-        }
-
         Services.RemoveAll(descriptor.ServiceDescriptor.ServiceType);
 
         Services.PostConfigure<OpenIddictValidationOptions>(options =>
@@ -113,13 +97,8 @@ public class OpenIddictValidationBuilder
     /// <param name="configuration">The delegate used to configure the OpenIddict options.</param>
     /// <remarks>This extension can be safely called multiple times.</remarks>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
-    public OpenIddictValidationBuilder Configure(Action<OpenIddictValidationOptions> configuration)
+    public OpenIddictValidationBuilder Configure(Action<OpenIddictValidationOptions> configuration!!)
     {
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
         Services.Configure(configuration);
 
         return this;
@@ -131,14 +110,9 @@ public class OpenIddictValidationBuilder
     /// </summary>
     /// <param name="audiences">The audiences valid for this resource server.</param>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
-    public OpenIddictValidationBuilder AddAudiences(params string[] audiences)
+    public OpenIddictValidationBuilder AddAudiences(params string[] audiences!!)
     {
-        if (audiences is null)
-        {
-            throw new ArgumentNullException(nameof(audiences));
-        }
-
-        if (audiences.Any(audience => string.IsNullOrEmpty(audience)))
+        if (audiences.Any(string.IsNullOrEmpty))
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0123), nameof(audiences));
         }
@@ -172,15 +146,8 @@ public class OpenIddictValidationBuilder
     /// </summary>
     /// <param name="configuration">The server configuration.</param>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
-    public OpenIddictValidationBuilder SetConfiguration(OpenIdConnectConfiguration configuration)
-    {
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        return Configure(options => options.Configuration = configuration);
-    }
+    public OpenIddictValidationBuilder SetConfiguration(OpenIddictConfiguration configuration!!)
+        => Configure(options => options.Configuration = configuration);
 
     /// <summary>
     /// Sets the client identifier client_id used when communicating
@@ -220,15 +187,8 @@ public class OpenIddictValidationBuilder
     /// </summary>
     /// <param name="address">The issuer address.</param>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
-    public OpenIddictValidationBuilder SetIssuer(Uri address)
-    {
-        if (address is null)
-        {
-            throw new ArgumentNullException(nameof(address));
-        }
-
-        return Configure(options => options.Issuer = address);
-    }
+    public OpenIddictValidationBuilder SetIssuer(Uri address!!)
+        => Configure(options => options.Issuer = address);
 
     /// <summary>
     /// Sets the issuer address, which is used to determine the actual location of the

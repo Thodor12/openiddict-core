@@ -200,11 +200,11 @@ public class OpenIddictServerOptions
     public bool EnableDegradedMode { get; set; }
 
     /// <summary>
-    /// Gets the list of the handlers responsible of processing the OpenIddict server operations.
+    /// Gets the list of the handlers responsible for processing the OpenIddict server operations.
     /// Note: the list is automatically sorted based on the order assigned to each handler descriptor.
     /// As such, it MUST NOT be mutated after options initialization to preserve the exact order.
     /// </summary>
-    public List<OpenIddictServerHandlerDescriptor> Handlers { get; } = new(OpenIddictServerHandlers.DefaultHandlers);
+    public List<OpenIddictServerHandlerDescriptor> Handlers { get; } = new(DefaultHandlers);
 
     /// <summary>
     /// Gets or sets a boolean determining whether client identification is optional.

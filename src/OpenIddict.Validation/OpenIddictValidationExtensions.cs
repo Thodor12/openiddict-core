@@ -22,13 +22,8 @@ public static class OpenIddictValidationExtensions
     /// <param name="builder">The services builder used by OpenIddict to register new services.</param>
     /// <remarks>This extension can be safely called multiple times.</remarks>
     /// <returns>The <see cref="OpenIddictValidationBuilder"/>.</returns>
-    public static OpenIddictValidationBuilder AddValidation(this OpenIddictBuilder builder)
+    public static OpenIddictValidationBuilder AddValidation(this OpenIddictBuilder builder!!)
     {
-        if (builder is null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
-
         builder.Services.AddLogging();
         builder.Services.AddOptions();
 
@@ -41,6 +36,7 @@ public static class OpenIddictValidationExtensions
         builder.Services.TryAdd(DefaultHandlers.Select(descriptor => descriptor.ServiceDescriptor));
 
         // Register the built-in filters used by the default OpenIddict validation event handlers.
+        builder.Services.TryAddSingleton<RequireAccessTokenExtracted>();
         builder.Services.TryAddSingleton<RequireAccessTokenValidated>();
         builder.Services.TryAddSingleton<RequireAuthorizationEntryValidationEnabled>();
         builder.Services.TryAddSingleton<RequireLocalValidation>();
@@ -62,19 +58,9 @@ public static class OpenIddictValidationExtensions
     /// <remarks>This extension can be safely called multiple times.</remarks>
     /// <returns>The <see cref="OpenIddictBuilder"/>.</returns>
     public static OpenIddictBuilder AddValidation(
-        this OpenIddictBuilder builder,
-        Action<OpenIddictValidationBuilder> configuration)
+        this OpenIddictBuilder builder!!,
+        Action<OpenIddictValidationBuilder> configuration!!)
     {
-        if (builder is null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
-
-        if (configuration is null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
         configuration(builder.AddValidation());
 
         return builder;

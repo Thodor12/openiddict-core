@@ -12,13 +12,17 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Primitives;
 
+#if SUPPORTS_JSON_NODES
+using System.Text.Json.Nodes;
+#endif
+
 namespace OpenIddict.Abstractions;
 
 /// <summary>
 /// Represents an abstract OpenIddict message.
 /// </summary>
 /// <remarks>
-/// Security notice: developers instantiating this type are responsible of ensuring that the
+/// Security notice: developers instantiating this type are responsible for ensuring that the
 /// imported parameters are safe and won't cause the resulting message to grow abnormally,
 /// which may result in an excessive memory consumption and a potential denial of service.
 /// </remarks>
@@ -40,7 +44,7 @@ public class OpenIddictMessage
     /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
     public OpenIddictMessage(JsonElement parameters)
     {
-        if (parameters.ValueKind != JsonValueKind.Object)
+        if (parameters.ValueKind is not JsonValueKind.Object)
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0189), nameof(parameters));
         }
@@ -64,18 +68,41 @@ public class OpenIddictMessage
         }
     }
 
+#if SUPPORTS_JSON_NODES
     /// <summary>
     /// Initializes a new OpenIddict message.
     /// </summary>
     /// <param name="parameters">The message parameters.</param>
     /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
-    public OpenIddictMessage(IEnumerable<KeyValuePair<string, OpenIddictParameter>> parameters)
+    public OpenIddictMessage(JsonObject parameters!!)
     {
-        if (parameters is null)
+        foreach (var parameter in parameters)
         {
-            throw new ArgumentNullException(nameof(parameters));
-        }
+            // Ignore parameters whose name is null or empty.
+            if (string.IsNullOrEmpty(parameter.Key))
+            {
+                continue;
+            }
 
+            // While generally discouraged, JSON objects can contain multiple properties with
+            // the same name. In this case, the last occurrence replaces the previous ones.
+            if (HasParameter(parameter.Key))
+            {
+                RemoveParameter(parameter.Key);
+            }
+
+            AddParameter(parameter.Key, parameter.Value);
+        }
+    }
+#endif
+
+    /// <summary>
+    /// Initializes a new OpenIddict message.
+    /// </summary>
+    /// <param name="parameters">The message parameters.</param>
+    /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
+    public OpenIddictMessage(IEnumerable<KeyValuePair<string, OpenIddictParameter>> parameters!!)
+    {
         foreach (var parameter in parameters)
         {
             // Ignore parameters whose name is null or empty.
@@ -93,13 +120,8 @@ public class OpenIddictMessage
     /// </summary>
     /// <param name="parameters">The message parameters.</param>
     /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
-    public OpenIddictMessage(IEnumerable<KeyValuePair<string, string?>> parameters)
+    public OpenIddictMessage(IEnumerable<KeyValuePair<string, string?>> parameters!!)
     {
-        if (parameters is null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         foreach (var parameter in parameters.GroupBy(parameter => parameter.Key))
         {
             // Ignore parameters whose name is null or empty.
@@ -128,13 +150,8 @@ public class OpenIddictMessage
     /// </summary>
     /// <param name="parameters">The message parameters.</param>
     /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
-    public OpenIddictMessage(IEnumerable<KeyValuePair<string, string?[]?>> parameters)
+    public OpenIddictMessage(IEnumerable<KeyValuePair<string, string?[]?>> parameters!!)
     {
-        if (parameters is null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         foreach (var parameter in parameters)
         {
             // Ignore parameters whose name is null or empty.
@@ -161,13 +178,8 @@ public class OpenIddictMessage
     /// </summary>
     /// <param name="parameters">The message parameters.</param>
     /// <remarks>Parameters with a null or empty key are always ignored.</remarks>
-    public OpenIddictMessage(IEnumerable<KeyValuePair<string, StringValues>> parameters)
+    public OpenIddictMessage(IEnumerable<KeyValuePair<string, StringValues>> parameters!!)
     {
-        if (parameters is null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         foreach (var parameter in parameters)
         {
             // Ignore parameters whose name is null or empty.
@@ -238,21 +250,9 @@ public class OpenIddictMessage
     /// Gets the value corresponding to a given parameter.
     /// </summary>
     /// <param name="name">The parameter name.</param>
-    /// <returns>The parameter value, or <c>null</c> if it cannot be found.</returns>
+    /// <returns>The parameter value, or <see langword="null"/> if it cannot be found.</returns>
     public OpenIddictParameter? GetParameter(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException(SR.GetResourceString(SR.ID0190), nameof(name));
-        }
-
-        if (Parameters.TryGetValue(name, out OpenIddictParameter value))
-        {
-            return value;
-        }
-
-        return null;
-    }
+        => TryGetParameter(name, out var parameter) ? parameter : (OpenIddictParameter?) null;
 
     /// <summary>
     /// Gets all the parameters associated with this instance.
@@ -265,7 +265,7 @@ public class OpenIddictMessage
     /// Determines whether the current message contains the specified parameter.
     /// </summary>
     /// <param name="name">The parameter name.</param>
-    /// <returns><c>true</c> if the parameter is present, <c>false</c> otherwise.</returns>
+    /// <returns><see langword="true"/> if the parameter is present, <see langword="false"/> otherwise.</returns>
     public bool HasParameter(string name)
     {
         if (string.IsNullOrEmpty(name))
@@ -326,7 +326,7 @@ public class OpenIddictMessage
     /// </summary>
     /// <param name="name">The parameter name.</param>
     /// <param name="value">The parameter value.</param>
-    /// <returns><c>true</c> if the parameter could be found, <c>false</c> otherwise.</returns>
+    /// <returns><see langword="true"/> if the parameter could be found, <see langword="false"/> otherwise.</returns>
     public bool TryGetParameter(string name, out OpenIddictParameter value)
     {
         if (string.IsNullOrEmpty(name))
@@ -387,13 +387,8 @@ public class OpenIddictMessage
     /// Writes the message to the specified JSON writer.
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>
-    public void WriteTo(Utf8JsonWriter writer)
+    public void WriteTo(Utf8JsonWriter writer!!)
     {
-        if (writer is null)
-        {
-            throw new ArgumentNullException(nameof(writer));
-        }
-
         writer.WriteStartObject();
 
         foreach (var parameter in Parameters)

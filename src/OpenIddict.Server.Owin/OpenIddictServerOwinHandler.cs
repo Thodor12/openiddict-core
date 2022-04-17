@@ -6,6 +6,7 @@
 
 using System.Security.Claims;
 using Microsoft.Owin.Security.Infrastructure;
+using static OpenIddict.Server.Owin.OpenIddictServerOwinConstants;
 using Properties = OpenIddict.Server.Owin.OpenIddictServerOwinConstants.Properties;
 
 namespace OpenIddict.Server.Owin;
@@ -24,8 +25,8 @@ public class OpenIddictServerOwinHandler : AuthenticationHandler<OpenIddictServe
     /// <param name="dispatcher">The OpenIddict server dispatcher used by this instance.</param>
     /// <param name="factory">The OpenIddict server factory used by this instance.</param>
     public OpenIddictServerOwinHandler(
-        IOpenIddictServerDispatcher dispatcher,
-        IOpenIddictServerFactory factory)
+        IOpenIddictServerDispatcher dispatcher!!,
+        IOpenIddictServerFactory factory!!)
     {
         _dispatcher = dispatcher;
         _factory = factory;
@@ -109,11 +110,8 @@ public class OpenIddictServerOwinHandler : AuthenticationHandler<OpenIddictServe
     /// <inheritdoc/>
     protected override async Task<AuthenticationTicket?> AuthenticateCoreAsync()
     {
-        var transaction = Context.Get<OpenIddictServerTransaction>(typeof(OpenIddictServerTransaction).FullName);
-        if (transaction is null)
-        {
+        var transaction = Context.Get<OpenIddictServerTransaction>(typeof(OpenIddictServerTransaction).FullName) ??
             throw new InvalidOperationException(SR.GetResourceString(SR.ID0112));
-        }
 
         // Note: in many cases, the authentication token was already validated by the time this action is called
         // (generally later in the pipeline, when using the pass-through mode). To avoid having to re-validate it,
@@ -195,37 +193,37 @@ public class OpenIddictServerOwinHandler : AuthenticationHandler<OpenIddictServe
                 IssuedUtc = principal.GetCreationDate()
             };
 
-            // Attach the tokens to allow any ASP.NET Core component (e.g a controller)
+            // Attach the tokens to allow any OWIN component (e.g a controller)
             // to retrieve them (e.g to make an API request to another application).
 
-            if (context.AccessTokenPrincipal is not null && !string.IsNullOrEmpty(context.AccessToken))
+            if (!string.IsNullOrEmpty(context.AccessToken))
             {
-                properties.Dictionary[TokenTypeHints.AccessToken] = context.AccessToken;
+                properties.Dictionary[Tokens.AccessToken] = context.AccessToken;
             }
 
-            if (context.AuthorizationCodePrincipal is not null && !string.IsNullOrEmpty(context.AuthorizationCode))
+            if (!string.IsNullOrEmpty(context.AuthorizationCode))
             {
-                properties.Dictionary[TokenTypeHints.AuthorizationCode] = context.AuthorizationCode;
+                properties.Dictionary[Tokens.AuthorizationCode] = context.AuthorizationCode;
             }
 
-            if (context.DeviceCodePrincipal is not null && !string.IsNullOrEmpty(context.DeviceCode))
+            if (!string.IsNullOrEmpty(context.DeviceCode))
             {
-                properties.Dictionary[TokenTypeHints.DeviceCode] = context.DeviceCode;
+                properties.Dictionary[Tokens.DeviceCode] = context.DeviceCode;
             }
 
-            if (context.IdentityTokenPrincipal is not null && !string.IsNullOrEmpty(context.IdentityToken))
+            if (!string.IsNullOrEmpty(context.IdentityToken))
             {
-                properties.Dictionary[TokenTypeHints.IdToken] = context.IdentityToken;
+                properties.Dictionary[Tokens.IdentityToken] = context.IdentityToken;
             }
 
-            if (context.RefreshTokenPrincipal is not null && !string.IsNullOrEmpty(context.RefreshToken))
+            if (!string.IsNullOrEmpty(context.RefreshToken))
             {
-                properties.Dictionary[TokenTypeHints.RefreshToken] = context.RefreshToken;
+                properties.Dictionary[Tokens.RefreshToken] = context.RefreshToken;
             }
 
-            if (context.UserCodePrincipal is not null && !string.IsNullOrEmpty(context.UserCode))
+            if (!string.IsNullOrEmpty(context.UserCode))
             {
-                properties.Dictionary[TokenTypeHints.UserCode] = context.UserCode;
+                properties.Dictionary[Tokens.UserCode] = context.UserCode;
             }
 
             return new AuthenticationTicket((ClaimsIdentity) principal.Identity, properties);

@@ -32,13 +32,13 @@ public static partial class OpenIddictServerDataProtectionHandlers
             GenerateDataProtectionToken.Descriptor);
 
         /// <summary>
-        /// Contains the logic responsible of validating tokens generated using Data Protection.
+        /// Contains the logic responsible for validating tokens generated using Data Protection.
         /// </summary>
         public class ValidateDataProtectionToken : IOpenIddictServerHandler<ValidateTokenContext>
         {
             private readonly IOptionsMonitor<OpenIddictServerDataProtectionOptions> _options;
 
-            public ValidateDataProtectionToken(IOptionsMonitor<OpenIddictServerDataProtectionOptions> options)
+            public ValidateDataProtectionToken(IOptionsMonitor<OpenIddictServerDataProtectionOptions> options!!)
                 => _options = options;
 
             /// <summary>
@@ -232,13 +232,13 @@ public static partial class OpenIddictServerDataProtectionHandlers
         }
 
         /// <summary>
-        /// Contains the logic responsible of generating a token using Data Protection.
+        /// Contains the logic responsible for generating a token using Data Protection.
         /// </summary>
         public class GenerateDataProtectionToken : IOpenIddictServerHandler<GenerateTokenContext>
         {
             private readonly IOptionsMonitor<OpenIddictServerDataProtectionOptions> _options;
 
-            public GenerateDataProtectionToken(IOptionsMonitor<OpenIddictServerDataProtectionOptions> options)
+            public GenerateDataProtectionToken(IOptionsMonitor<OpenIddictServerDataProtectionOptions> options!!)
                 => _options = options;
 
             /// <summary>
@@ -252,13 +252,8 @@ public static partial class OpenIddictServerDataProtectionHandlers
                     .Build();
 
             /// <inheritdoc/>
-            public ValueTask HandleAsync(GenerateTokenContext context)
+            public ValueTask HandleAsync(GenerateTokenContext context!!)
             {
-                if (context is null)
-                {
-                    throw new ArgumentNullException(nameof(context));
-                }
-
                 // If an access token was already attached by another handler, don't overwrite it.
                 if (!string.IsNullOrEmpty(context.Token))
                 {

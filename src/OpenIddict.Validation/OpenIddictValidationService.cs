@@ -7,7 +7,6 @@
 using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace OpenIddict.Validation;
@@ -20,7 +19,7 @@ public class OpenIddictValidationService
     /// Creates a new instance of the <see cref="OpenIddictValidationService"/> class.
     /// </summary>
     /// <param name="provider">The service provider.</param>
-    public OpenIddictValidationService(IServiceProvider provider)
+    public OpenIddictValidationService(IServiceProvider provider!!)
         => _provider = provider;
 
     /// <summary>
@@ -29,13 +28,8 @@ public class OpenIddictValidationService
     /// <param name="address">The address of the remote metadata endpoint.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
     /// <returns>The OpenID Connect server configuration retrieved from the remote server.</returns>
-    public async ValueTask<OpenIdConnectConfiguration> GetConfigurationAsync(Uri address, CancellationToken cancellationToken = default)
+    public async ValueTask<OpenIddictConfiguration> GetConfigurationAsync(Uri address!!, CancellationToken cancellationToken = default)
     {
-        if (address is null)
-        {
-            throw new ArgumentNullException(nameof(address));
-        }
-
         if (!address.IsAbsoluteUri)
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0144), nameof(address));
@@ -61,13 +55,8 @@ public class OpenIddictValidationService
             request = await ApplyConfigurationRequestAsync();
             var response = await ExtractConfigurationResponseAsync();
 
-            var configuration = await HandleConfigurationResponseAsync();
-            if (configuration is null)
-            {
+            return await HandleConfigurationResponseAsync() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0145));
-            }
-
-            return configuration;
 
             async ValueTask<OpenIddictRequest> PrepareConfigurationRequestAsync()
             {
@@ -93,6 +82,7 @@ public class OpenIddictValidationService
             {
                 var context = new ApplyConfigurationRequestContext(transaction)
                 {
+                    Address = address,
                     Request = request
                 };
 
@@ -112,6 +102,7 @@ public class OpenIddictValidationService
             {
                 var context = new ExtractConfigurationResponseContext(transaction)
                 {
+                    Address = address,
                     Request = request
                 };
 
@@ -129,10 +120,11 @@ public class OpenIddictValidationService
                 return context.Response;
             }
 
-            async ValueTask<OpenIdConnectConfiguration> HandleConfigurationResponseAsync()
+            async ValueTask<OpenIddictConfiguration> HandleConfigurationResponseAsync()
             {
                 var context = new HandleConfigurationResponseContext(transaction)
                 {
+                    Address = address,
                     Request = request,
                     Response = response
                 };
@@ -170,13 +162,8 @@ public class OpenIddictValidationService
     /// <param name="address">The address of the remote metadata endpoint.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
     /// <returns>The security keys retrieved from the remote server.</returns>
-    public async ValueTask<JsonWebKeySet> GetSecurityKeysAsync(Uri address, CancellationToken cancellationToken = default)
+    public async ValueTask<JsonWebKeySet> GetSecurityKeysAsync(Uri address!!, CancellationToken cancellationToken = default)
     {
-        if (address is null)
-        {
-            throw new ArgumentNullException(nameof(address));
-        }
-
         if (!address.IsAbsoluteUri)
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0144), nameof(address));
@@ -203,13 +190,8 @@ public class OpenIddictValidationService
 
             var response = await ExtractCryptographyResponseAsync();
 
-            var keys = await HandleCryptographyResponseAsync();
-            if (keys is null)
-            {
+            return await HandleCryptographyResponseAsync() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0147));
-            }
-
-            return keys;
 
             async ValueTask<OpenIddictRequest> PrepareCryptographyRequestAsync()
             {
@@ -235,6 +217,7 @@ public class OpenIddictValidationService
             {
                 var context = new ApplyCryptographyRequestContext(transaction)
                 {
+                    Address = address,
                     Request = request
                 };
 
@@ -254,6 +237,7 @@ public class OpenIddictValidationService
             {
                 var context = new ExtractCryptographyResponseContext(transaction)
                 {
+                    Address = address,
                     Request = request
                 };
 
@@ -325,13 +309,8 @@ public class OpenIddictValidationService
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> that can be used to abort the operation.</param>
     /// <returns>The claims principal created from the claim retrieved from the remote server.</returns>
     public async ValueTask<ClaimsPrincipal> IntrospectTokenAsync(
-        Uri address, string token, string? hint, CancellationToken cancellationToken = default)
+        Uri address!!, string token, string? hint, CancellationToken cancellationToken = default)
     {
-        if (address is null)
-        {
-            throw new ArgumentNullException(nameof(address));
-        }
-
         if (!address.IsAbsoluteUri)
         {
             throw new ArgumentException(SR.GetResourceString(SR.ID0144), nameof(address));
@@ -362,13 +341,8 @@ public class OpenIddictValidationService
             request = await ApplyIntrospectionRequestAsync();
             var response = await ExtractIntrospectionResponseAsync();
 
-            var principal = await HandleIntrospectionResponseAsync();
-            if (principal is null)
-            {
+            return await HandleIntrospectionResponseAsync() ??
                 throw new InvalidOperationException(SR.GetResourceString(SR.ID0157));
-            }
-
-            return principal;
 
             async ValueTask<OpenIddictRequest> PrepareIntrospectionRequestAsync()
             {
@@ -396,6 +370,7 @@ public class OpenIddictValidationService
             {
                 var context = new ApplyIntrospectionRequestContext(transaction)
                 {
+                    Address = address,
                     Request = request
                 };
 
@@ -415,6 +390,7 @@ public class OpenIddictValidationService
             {
                 var context = new ExtractIntrospectionResponseContext(transaction)
                 {
+                    Address = address,
                     Request = request
                 };
 
@@ -436,6 +412,7 @@ public class OpenIddictValidationService
             {
                 var context = new HandleIntrospectionResponseContext(transaction)
                 {
+                    Address = address,
                     Request = request,
                     Response = response,
                     Token = token
